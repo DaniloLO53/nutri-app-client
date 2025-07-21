@@ -1,0 +1,30 @@
+import type { Appointment } from '../types/appointment';
+import type { NutritionistAppointment } from '../types/nutritionistsAppointment';
+import { apiClient } from './config/axiosConfig';
+
+export const fetchFutureAppointmentsApi = () => {
+  return apiClient.get<Appointment[]>('/appointments/patient/future');
+};
+
+export const fetchNutritionistAppointmentsApi = () => {
+  return apiClient.get<NutritionistAppointment[]>(
+    '/nutritionists/me/appointments',
+  );
+};
+
+export const deleteAppointmentApi = (appointmentId: string) => {
+  return apiClient.delete(`/nutritionists/me/appointments/${appointmentId}`);
+};
+
+export interface CreateAppointmentPayload {
+  patientId: string;
+  isRemote: boolean;
+}
+
+// Função para criar uma consulta preenchendo uma disponibilidade existente
+export const createAppointmentApi = (
+  scheduleId: string,
+  payload: CreateAppointmentPayload,
+) => {
+  return apiClient.post(`/appointments/schedules/${scheduleId}`, payload);
+};
