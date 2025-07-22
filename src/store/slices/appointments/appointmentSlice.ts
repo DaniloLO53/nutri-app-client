@@ -1,8 +1,4 @@
-import {
-  createSlice,
-  createAsyncThunk,
-  type PayloadAction,
-} from '@reduxjs/toolkit';
+import { createSlice, createAsyncThunk, type PayloadAction } from '@reduxjs/toolkit';
 import { AxiosError } from 'axios';
 import type { AppointmentState } from '../../../types/appointment';
 import {
@@ -28,27 +24,22 @@ export const createAppointmentForPatient = createAsyncThunk<
     return response.data;
   } catch (error) {
     const axiosError = error as AxiosError<{ message: string }>;
-    return rejectWithValue(
-      axiosError.response?.data?.message || 'Erro ao buscar a agenda.',
-    );
+    return rejectWithValue(axiosError.response?.data?.message || 'Erro ao buscar a agenda.');
   }
 });
 
-export const deleteAppointment = createAsyncThunk<
-  string,
-  string,
-  { rejectValue: string }
->('schedule/deleteAppointment', async (appointmentId, { rejectWithValue }) => {
-  try {
-    await deleteAppointmentApi(appointmentId);
-    return appointmentId; // Retorna o ID para o reducer
-  } catch (error) {
-    const axiosError = error as AxiosError<{ message: string }>;
-    return rejectWithValue(
-      axiosError.response?.data?.message || 'Erro ao buscar a agenda.',
-    );
-  }
-});
+export const deleteAppointment = createAsyncThunk<string, string, { rejectValue: string }>(
+  'schedule/deleteAppointment',
+  async (appointmentId, { rejectWithValue }) => {
+    try {
+      await deleteAppointmentApi(appointmentId);
+      return appointmentId; // Retorna o ID para o reducer
+    } catch (error) {
+      const axiosError = error as AxiosError<{ message: string }>;
+      return rejectWithValue(axiosError.response?.data?.message || 'Erro ao buscar a agenda.');
+    }
+  },
+);
 
 export const fetchFutureAppointments = createAsyncThunk<
   CalendarAppointment[],
@@ -61,9 +52,7 @@ export const fetchFutureAppointments = createAsyncThunk<
     return response.data;
   } catch (error) {
     const axiosError = error as AxiosError<{ message: string }>;
-    return rejectWithValue(
-      axiosError.response?.data?.message || 'Erro ao buscar agendamentos.',
-    );
+    return rejectWithValue(axiosError.response?.data?.message || 'Erro ao buscar agendamentos.');
   }
 });
 
@@ -77,7 +66,13 @@ const initialState: AppointmentState = {
 const appointmentSlice = createSlice({
   name: 'appointments',
   initialState,
-  reducers: {},
+  reducers: {
+    clearAppointments: (state) => {
+      state.appointments = [];
+      state.status = 'idle';
+      state.error = null;
+    },
+  },
   extraReducers: (builder) => {
     builder
 
@@ -115,4 +110,5 @@ const appointmentSlice = createSlice({
   },
 });
 
+export const { clearAppointments } = appointmentSlice.actions;
 export default appointmentSlice.reducer;

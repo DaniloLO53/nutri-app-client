@@ -9,15 +9,10 @@ interface ScheduleResultCardProps {
 }
 
 const ScheduleResultCard = ({ schedule }: ScheduleResultCardProps) => {
-  console.log(schedule.id);
   return (
-    <Card
-      sx={{ display: 'flex', alignItems: 'center', width: '100%', mb: 2, p: 3 }}
-    >
+    <Card sx={{ display: 'flex', alignItems: 'center', width: '100%', mb: 2, p: 3 }}>
       <Box sx={{ p: 1 }}>
-        <Avatar sx={{ width: 60, height: 60 }}>
-          {schedule.nutritionistName.charAt(0)}
-        </Avatar>
+        <Avatar sx={{ width: 60, height: 60 }}>{schedule.nutritionistName.charAt(0)}</Avatar>
       </Box>
 
       <Box
