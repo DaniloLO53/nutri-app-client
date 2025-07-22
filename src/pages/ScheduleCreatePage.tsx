@@ -31,7 +31,11 @@ import {
 } from '../store/slices/schedules/scheduleSlice';
 import CalendarGrid from '../components/CalendarGrid';
 import AppointmentCreateNutritionist from '../components/AppointmentCreateNutritionist';
-import { EventType, type CalendarAppointment, type CalendarSchedule } from '../types/schedule';
+import {
+  EventType,
+  type CalendarNutritionistAppointment,
+  type CalendarSchedule,
+} from '../types/schedule';
 import { deleteAppointment } from '../store/slices/appointments/appointmentSlice';
 
 const DURATIONS = [15, 30, 45, 60];
@@ -48,7 +52,8 @@ const ScheduleCreatePage = () => {
   const [slotDuration, setSlotDuration] = useState(30);
 
   const [isAppointmentActionDialogOpen, setIsAppointmentActionDialogOpen] = useState(false);
-  const [selectedAppointment, setSelectedAppointment] = useState<CalendarAppointment | null>(null);
+  const [selectedAppointment, setSelectedAppointment] =
+    useState<CalendarNutritionistAppointment | null>(null);
 
   const [isCreateDialogOpen, setIsCreateDialogOpen] = useState(false);
   const [isScheduleActionDialogOpen, setIsScheduleActionDialogOpen] = useState(false);
@@ -84,14 +89,14 @@ const ScheduleCreatePage = () => {
     setSelectedAppointment(null); // <-- NOVO
   };
 
-  const handleEventClick = (event: CalendarSchedule | CalendarAppointment) => {
+  const handleEventClick = (event: CalendarSchedule | CalendarNutritionistAppointment) => {
     if (event.type === EventType.SCHEDULE) {
       // Lógica antiga para horários disponíveis
       setSelectedSchedule(event as CalendarSchedule);
       setIsScheduleActionDialogOpen(true);
     } else if (event.type === EventType.APPOINTMENT) {
       // Lógica nova para consultas marcadas
-      setSelectedAppointment(event as CalendarAppointment);
+      setSelectedAppointment(event as CalendarNutritionistAppointment);
       setIsAppointmentActionDialogOpen(true);
     }
   };

@@ -6,11 +6,11 @@ import {
   deleteAppointmentApi,
   fetchFutureAppointmentsApi,
 } from '../../../services/appointmentService';
-import type { CalendarAppointment } from '../../../types/schedule';
+import type { CalendarNutritionistAppointment } from '../../../types/schedule';
 import { fetchSchedule } from '../schedules/scheduleSlice';
 
 export const createAppointmentForPatient = createAsyncThunk<
-  CalendarAppointment, // <-- 2. Use o novo tipo como tipo de retorno
+  CalendarNutritionistAppointment, // <-- 2. Use o novo tipo como tipo de retorno
   { scheduleId: string; patientId: string; isRemote: boolean; startDate: string; endDate: string },
   { rejectValue: string }
 >('schedule/createAppointment', async (data, { rejectWithValue, dispatch }) => {
@@ -48,7 +48,7 @@ export const deleteAppointment = createAsyncThunk<
 );
 
 export const fetchFutureAppointments = createAsyncThunk<
-  CalendarAppointment[],
+  CalendarNutritionistAppointment[],
   // Appointment[],
   void,
   { rejectValue: string }
@@ -110,7 +110,7 @@ const appointmentSlice = createSlice({
       // CREATE APPOINTMENT
       .addCase(
         createAppointmentForPatient.fulfilled,
-        (state, action: PayloadAction<CalendarAppointment>) => {
+        (state, action: PayloadAction<CalendarNutritionistAppointment>) => {
           state.appointments.push(action.payload);
           state.status = 'succeeded';
         },

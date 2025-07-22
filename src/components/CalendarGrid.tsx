@@ -1,17 +1,17 @@
 import dayjs, { Dayjs } from 'dayjs';
-import { Box, Paper, Typography } from '@mui/material';
+import { alpha, Box, Paper, Typography } from '@mui/material';
 import {
   EventType,
-  type CalendarAppointment,
+  type CalendarNutritionistAppointment,
   type CalendarSchedule,
 } from '../types/schedule';
 
 interface CalendarGridProps {
   startOfWeek: dayjs.Dayjs;
   slotDuration: number;
-  events: (CalendarSchedule | CalendarAppointment)[];
+  events: (CalendarSchedule | CalendarNutritionistAppointment)[];
   onSlotClick: (slotDate: dayjs.Dayjs) => void;
-  onEventClick: (event: CalendarSchedule | CalendarAppointment) => void;
+  onEventClick: (event: CalendarSchedule | CalendarNutritionistAppointment) => void;
 }
 
 const CalendarGrid = ({
@@ -21,6 +21,7 @@ const CalendarGrid = ({
   onSlotClick,
   onEventClick,
 }: CalendarGridProps) => {
+  const now = dayjs(); // "Fotografa" a hora atual no momento da renderização
   const days = Array.from({ length: 7 }, (_, i) => startOfWeek.add(i, 'day'));
   const gridInterval = slotDuration === 15 || slotDuration === 45 ? 15 : 30;
 
@@ -32,7 +33,7 @@ const CalendarGrid = ({
   }
 
   // Função para calcular a posição e tamanho de um evento no grid
-  const getEventStyle = (event: CalendarSchedule | CalendarAppointment) => {
+  const getEventStyle = (event: CalendarSchedule | CalendarNutritionistAppointment) => {
     const eventStart = dayjs(event.startTime);
     const dayIndex = eventStart.diff(startOfWeek.startOf('day'), 'day');
     const startOfDay = eventStart.startOf('day').hour(8);
@@ -48,12 +49,8 @@ const CalendarGrid = ({
     return {
       gridColumn: dayIndex + 2, // Coluna do dia da semana (permanece igual)
       gridRow: gridRowValue, // Linha de início / Linha de fim
-      backgroundColor:
-        event.type === EventType.APPOINTMENT ? 'error.light' : 'primary.light',
-      color:
-        event.type === EventType.APPOINTMENT
-          ? 'error.contrastText'
-          : 'primary.contrastText',
+      backgroundColor: event.type === EventType.APPOINTMENT ? 'error.light' : 'primary.light',
+      color: event.type === EventType.APPOINTMENT ? 'error.contrastText' : 'primary.contrastText',
       borderLeft: `3px solid ${event.type === EventType.APPOINTMENT ? 'error.dark' : 'primary.dark'}`,
       p: 0.5,
       borderRadius: '4px',
@@ -62,8 +59,6 @@ const CalendarGrid = ({
       zIndex: 1, // Garante que o evento fique sobre as linhas da grade
     };
   };
-
-  console.log({ events });
 
   return (
     <Paper sx={{ overflow: 'auto' }}>
@@ -80,23 +75,36 @@ const CalendarGrid = ({
         <Box sx={{ gridColumn: 1, gridRow: 1 }} />
 
         {/* Cabeçalho dos Dias */}
-        {days.map((day, i) => (
-          <Box
-            key={i}
-            sx={{
-              gridColumn: i + 2,
-              gridRow: 1,
-              textAlign: 'center',
-              p: 1,
-              borderBottom: '1px solid #ddd',
-            }}
-          >
-            <Typography variant="subtitle2">
-              {day.format('ddd').toUpperCase()}
-            </Typography>
-            <Typography variant="h6">{day.format('D')}</Typography>
-          </Box>
-        ))}
+        {days.map((day, dayIndex) =>
+          timeSlots.map((time, timeIndex) => {
+            const slotStart = day.hour(time.hour()).minute(time.minute());
+            const slotEnd = slotStart.add(slotDuration, 'minute');
+
+            // Verifica se a hora atual está dentro do intervalo deste slot
+            const isCurrentSlot = now.isAfter(slotStart) && now.isBefore(slotEnd);
+
+            if (isCurrentSlot) console.log(time.hour(), time.minute());
+
+            return (
+              <Box
+                key={`${dayIndex}-${timeIndex}`}
+                sx={{
+                  gridColumn: dayIndex + 2,
+                  gridRow: timeIndex + 2,
+                  borderBottom: '1px solid #eee',
+                  borderRight: '1px solid #eee',
+                  cursor: 'pointer',
+                  '&:hover': { backgroundColor: 'action.hover' },
+                  // ✅ APLICA O ESTILO CONDICIONAL AQUI
+                  backgroundColor: isCurrentSlot
+                    ? alpha('#ffc107', 0.2) // Uma cor de destaque sutil (amarelo)
+                    : undefined,
+                }}
+                onClick={() => onSlotClick(slotStart)} // Reutiliza a variável `slotStart`
+              />
+            );
+          }),
+        )}
 
         {/* Coluna de Horários */}
         {timeSlots.map((time, i) => (
@@ -139,9 +147,7 @@ const CalendarGrid = ({
                 cursor: 'pointer',
                 '&:hover': { backgroundColor: 'action.hover' },
               }}
-              onClick={() =>
-                onSlotClick(day.hour(time.hour()).minute(time.minute()))
-              }
+              onClick={() => onSlotClick(day.hour(time.hour()).minute(time.minute()))}
             />
           )),
         )}
@@ -168,7 +174,7 @@ const CalendarGrid = ({
               }}
             >
               {event.type === EventType.APPOINTMENT
-                ? (event as CalendarAppointment).patient?.name
+                ? (event as CalendarNutritionistAppointment).patient?.name
                 : 'Disponível'}
             </Box>
           );

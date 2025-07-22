@@ -1,6 +1,6 @@
-import type { AppointmentStatusValue } from './appointment';
+import type { AppointmentStatusEnum } from './appointment';
 
-interface Patient {
+interface PatientOrNutritionist {
   id: string;
   name: string;
   email: string;
@@ -35,13 +35,24 @@ export interface CalendarSchedule {
   durationMinutes: number;
 }
 
-export interface CalendarAppointment {
+export interface CalendarNutritionistAppointment {
   type: EventTypeValue;
   id: string;
-  patient?: Patient;
+  patient?: PatientOrNutritionist;
   startTime: string; // Formato ISO 8601: "2025-07-21T10:00:00Z"
   durationMinutes: number;
-  status?: AppointmentStatusValue;
+  isRemote: boolean;
+  status?: AppointmentStatusEnum;
+}
+
+export interface CalendarPatientAppointment {
+  type: EventTypeValue;
+  id: string;
+  nutritionist?: PatientOrNutritionist;
+  startTime: string; // Formato ISO 8601: "2025-07-21T10:00:00Z"
+  durationMinutes: number;
+  isRemote: boolean;
+  status?: AppointmentStatusEnum;
 }
 
 // O estado para o slice do Redux
@@ -52,15 +63,7 @@ export interface ScheduleState {
 }
 
 export interface AppointmentState {
-  appointments: CalendarAppointment[];
+  appointments: CalendarPatientAppointment[];
   status: 'idle' | 'loading' | 'succeeded' | 'failed';
   error: string | null;
-}
-
-export interface CreateAppointmentSuccessPayload {
-  /** O novo objeto de consulta retornado pelo backend. */
-  newAppointment: CalendarAppointment;
-
-  /** O ID da disponibilidade que foi substituída pela nova consulta. */
-  oldscheduleId: string;
 }

@@ -1,4 +1,4 @@
-import type { CalendarAppointment } from './schedule';
+import type { CalendarPatientAppointment, CalendarNutritionistAppointment } from './schedule';
 
 export const AppointmentStatus = {
   AGENDADO: 'AGENDADO',
@@ -9,8 +9,7 @@ export const AppointmentStatus = {
 } as const;
 
 export type AppointmentStatusEnum = keyof typeof AppointmentStatus;
-export type AppointmentStatusValue =
-  (typeof AppointmentStatus)[keyof typeof AppointmentStatus];
+export type AppointmentStatusValue = (typeof AppointmentStatus)[keyof typeof AppointmentStatus];
 
 // export interface Appointment {
 //   id: string;
@@ -22,7 +21,7 @@ export type AppointmentStatusValue =
 // }
 
 export interface AppointmentState {
-  appointments: CalendarAppointment[];
+  appointments: (CalendarPatientAppointment | CalendarNutritionistAppointment)[];
   status: 'idle' | 'loading' | 'succeeded' | 'failed';
   error: string | null;
 }
