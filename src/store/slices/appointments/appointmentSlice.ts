@@ -7,18 +7,20 @@ import {
   fetchFutureAppointmentsApi,
 } from '../../../services/appointmentService';
 import type { CalendarAppointment } from '../../../types/schedule';
+import { fetchSchedule } from '../schedules/scheduleSlice';
 
 export const createAppointmentForPatient = createAsyncThunk<
   CalendarAppointment, // <-- 2. Use o novo tipo como tipo de retorno
-  { scheduleId: string; patientId: string; isRemote: boolean },
+  { scheduleId: string; patientId: string; isRemote: boolean; startDate: string; endDate: string },
   { rejectValue: string }
->('schedule/createAppointment', async (data, { rejectWithValue }) => {
-  const { scheduleId, patientId, isRemote } = data;
+>('schedule/createAppointment', async (data, { rejectWithValue, dispatch }) => {
+  const { scheduleId, patientId, isRemote, startDate, endDate } = data;
   try {
     const response = await createAppointmentApi(scheduleId, {
       patientId,
       isRemote,
     });
+    dispatch(fetchSchedule({ startDate, endDate }));
 
     // 3. Retorne o objeto composto com a resposta da API e o ID original
     return response.data;
@@ -28,12 +30,16 @@ export const createAppointmentForPatient = createAsyncThunk<
   }
 });
 
-export const deleteAppointment = createAsyncThunk<string, string, { rejectValue: string }>(
+export const deleteAppointment = createAsyncThunk<
+  void,
+  { appointmentId: string; startDate: string; endDate: string },
+  { rejectValue: string }
+>(
   'schedule/deleteAppointment',
-  async (appointmentId, { rejectWithValue }) => {
+  async ({ startDate, endDate, appointmentId }, { rejectWithValue, dispatch }) => {
     try {
       await deleteAppointmentApi(appointmentId);
-      return appointmentId; // Retorna o ID para o reducer
+      dispatch(fetchSchedule({ startDate, endDate }));
     } catch (error) {
       const axiosError = error as AxiosError<{ message: string }>;
       return rejectWithValue(axiosError.response?.data?.message || 'Erro ao buscar a agenda.');
@@ -58,7 +64,6 @@ export const fetchFutureAppointments = createAsyncThunk<
 
 const initialState: AppointmentState = {
   appointments: [],
-  // TODO: mudar para enum
   status: 'idle',
   error: null,
 };
@@ -93,11 +98,13 @@ const appointmentSlice = createSlice({
       })
 
       // DELETE APPOINTMENT
-      .addCase(deleteAppointment.fulfilled, (state, action) => {
-        // A lógica é a mesma: remover o evento do estado
-        state.appointments = state.appointments.filter(
-          (appointment) => appointment.id !== action.payload,
-        );
+      .addCase(deleteAppointment.fulfilled, (state) => {
+        // state.appointments = state.appointments.filter(({ id }) => id !== action.payload);
+        state.status = 'succeeded';
+      })
+      .addCase(deleteAppointment.rejected, (state, action) => {
+        state.error = action.payload ?? 'Falha ao deletar consulta.';
+        state.status = 'failed';
       })
 
       // CREATE APPOINTMENT
@@ -105,6 +112,7 @@ const appointmentSlice = createSlice({
         createAppointmentForPatient.fulfilled,
         (state, action: PayloadAction<CalendarAppointment>) => {
           state.appointments.push(action.payload);
+          state.status = 'succeeded';
         },
       );
   },

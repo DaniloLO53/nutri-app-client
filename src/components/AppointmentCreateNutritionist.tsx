@@ -33,22 +33,23 @@ interface AppointmentCreateNutritionistProps {
   open: boolean;
   onClose: () => void;
   schedule: CalendarSchedule | null;
+  startDate: string;
+  endDate: string;
 }
 
 const AppointmentCreateNutritionist = ({
   open,
   onClose,
   schedule,
+  startDate,
+  endDate,
 }: AppointmentCreateNutritionistProps) => {
   const dispatch = useDispatch<AppDispatch>();
-  const { patients, status } = useSelector(
-    (state: RootState) => state.patientSearch,
-  );
+  const { patients, status } = useSelector((state: RootState) => state.patientSearch);
   const [searchTerm, setSearchTerm] = useState('');
 
   const [isConfirmOpen, setIsConfirmOpen] = useState(false);
-  const [selectedPatient, setSelectedPatient] =
-    useState<PatientSearchResult | null>(null);
+  const [selectedPatient, setSelectedPatient] = useState<PatientSearchResult | null>(null);
   const [isRemote, setIsRemote] = useState(false);
 
   // Usa o hook de debounce com um delay de 2000ms (2 segundos)
@@ -89,6 +90,8 @@ const AppointmentCreateNutritionist = ({
         scheduleId: schedule.id,
         patientId: selectedPatient.id,
         isRemote: isRemote,
+        startDate,
+        endDate,
       }),
     );
 
@@ -102,8 +105,7 @@ const AppointmentCreateNutritionist = ({
         <DialogTitle>Agendar para um Paciente</DialogTitle>
         <DialogContent>
           <Typography variant="body2" sx={{ mb: 2 }}>
-            Horário selecionado:{' '}
-            {dayjs(schedule?.startTime).format('DD/MM/YYYY [às] HH:mm')}
+            Horário selecionado: {dayjs(schedule?.startTime).format('DD/MM/YYYY [às] HH:mm')}
           </Typography>
           <TextField
             autoFocus
@@ -125,19 +127,11 @@ const AppointmentCreateNutritionist = ({
               <List>
                 {patients.length > 0
                   ? patients.map((patient) => (
-                      <ListItemButton
-                        key={patient.id}
-                        onClick={() => handlePatientSelect(patient)}
-                      >
-                        <ListItemText
-                          primary={patient.fullName}
-                          secondary={patient.email}
-                        />
+                      <ListItemButton key={patient.id} onClick={() => handlePatientSelect(patient)}>
+                        <ListItemText primary={patient.fullName} secondary={patient.email} />
                       </ListItemButton>
                     ))
-                  : debouncedSearchTerm && (
-                      <Typography>Nenhum paciente encontrado.</Typography>
-                    )}
+                  : debouncedSearchTerm && <Typography>Nenhum paciente encontrado.</Typography>}
               </List>
             )}
           </Box>
@@ -151,17 +145,11 @@ const AppointmentCreateNutritionist = ({
           <DialogContentText>
             Deseja confirmar o agendamento para o paciente{' '}
             <strong>{selectedPatient?.fullName}</strong> no dia{' '}
-            <strong>
-              {dayjs(schedule?.startTime).format('DD/MM/YYYY [às] HH:mm')}
-            </strong>
-            ?
+            <strong>{dayjs(schedule?.startTime).format('DD/MM/YYYY [às] HH:mm')}</strong>?
           </DialogContentText>
           <FormControlLabel
             control={
-              <Checkbox
-                checked={isRemote}
-                onChange={(e) => setIsRemote(e.target.checked)}
-              />
+              <Checkbox checked={isRemote} onChange={(e) => setIsRemote(e.target.checked)} />
             }
             label="Marcar como Teleconsulta"
             sx={{ mt: 2 }}
@@ -169,11 +157,7 @@ const AppointmentCreateNutritionist = ({
         </DialogContent>
         <DialogActions>
           <Button onClick={handleCloseConfirmDialog}>Cancelar</Button>
-          <Button
-            onClick={handleConfirmAppointment}
-            variant="contained"
-            autoFocus
-          >
+          <Button onClick={handleConfirmAppointment} variant="contained" autoFocus>
             Confirmar
           </Button>
         </DialogActions>

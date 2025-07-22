@@ -32,10 +32,7 @@ import {
 import CalendarGrid from '../components/CalendarGrid';
 import AppointmentCreateNutritionist from '../components/AppointmentCreateNutritionist';
 import { EventType, type CalendarAppointment, type CalendarSchedule } from '../types/schedule';
-import {
-  clearAppointments,
-  deleteAppointment,
-} from '../store/slices/appointments/appointmentSlice';
+import { deleteAppointment } from '../store/slices/appointments/appointmentSlice';
 
 const DURATIONS = [15, 30, 45, 60];
 
@@ -43,13 +40,9 @@ const ScheduleCreatePage = () => {
   const dispatch = useDispatch<AppDispatch>();
 
   const { schedules, status: scheduleStatus } = useSelector((state: RootState) => state.schedule);
-  const { appointments, status: appointmentStatus } = useSelector(
-    (state: RootState) => state.appointments, // Supondo que o slice se chama 'appointment'
-  );
-  const combinedEvents = useMemo(() => {
-    // O spread operator (...) é uma forma limpa de unir arrays
-    return [...schedules, ...appointments];
-  }, [schedules, appointments]); // A lista de dependências
+  // const { appointments, status: appointmentStatus } = useSelector(
+  //   (state: RootState) => state.appointments,
+  // );
 
   const [currentDate, setCurrentDate] = useState(dayjs());
   const [slotDuration, setSlotDuration] = useState(30);
@@ -68,7 +61,6 @@ const ScheduleCreatePage = () => {
   const endOfWeek = useMemo(() => currentDate.endOf('week'), [currentDate]);
 
   useEffect(() => {
-    clearAppointments(); // Clear appointments from Nutritionist Appointments Page (it's populated in useMemo)
     dispatch(
       fetchSchedule({
         startDate: startOfWeek.format('YYYY-MM-DD'), // Envia apenas a data. Ex: "2025-07-13"
@@ -107,8 +99,13 @@ const ScheduleCreatePage = () => {
   const handleConfirmAppointmentDelete = () => {
     if (!selectedAppointment) return;
 
-    // Você precisará criar esta ação no seu 'appointmentSlice' (veja Passo 4)
-    dispatch(deleteAppointment(selectedAppointment.id));
+    dispatch(
+      deleteAppointment({
+        appointmentId: selectedAppointment.id,
+        startDate: startOfWeek.format('YYYY-MM-DD'),
+        endDate: endOfWeek.format('YYYY-MM-DD'),
+      }),
+    );
     handleCloseDialogs();
   };
 
@@ -190,7 +187,7 @@ const ScheduleCreatePage = () => {
         </FormControl>
       </Box>
 
-      {scheduleStatus === 'loading' || appointmentStatus === 'loading' ? (
+      {scheduleStatus === 'loading' ? (
         <Box sx={{ display: 'flex', justifyContent: 'center' }}>
           <CircularProgress />
         </Box>
@@ -198,7 +195,7 @@ const ScheduleCreatePage = () => {
         <CalendarGrid
           startOfWeek={startOfWeek}
           slotDuration={slotDuration}
-          events={combinedEvents}
+          events={schedules}
           onSlotClick={handleSlotClick}
           onEventClick={handleEventClick}
         />
@@ -275,6 +272,8 @@ const ScheduleCreatePage = () => {
         open={isAppointmentCreateOpen}
         onClose={handleCloseDialogs}
         schedule={selectedSchedule}
+        startDate={startOfWeek.format('YYYY-MM-DD')}
+        endDate={endOfWeek.format('YYYY-MM-DD')}
       />
     </Container>
   );
