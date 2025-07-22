@@ -1,15 +1,13 @@
-import type { Appointment } from '../types/appointment';
 import type { NutritionistAppointment } from '../types/nutritionistsAppointment';
+import type { CalendarAppointment } from '../types/schedule';
 import { apiClient } from './config/axiosConfig';
 
 export const fetchFutureAppointmentsApi = () => {
-  return apiClient.get<Appointment[]>('/appointments/patient/future');
+  return apiClient.get<CalendarAppointment[]>('/appointments/patient/future');
 };
 
 export const fetchNutritionistAppointmentsApi = () => {
-  return apiClient.get<NutritionistAppointment[]>(
-    '/nutritionists/me/appointments',
-  );
+  return apiClient.get<NutritionistAppointment[]>('/nutritionists/me/appointments');
 };
 
 export const deleteAppointmentApi = (appointmentId: string) => {
@@ -22,9 +20,6 @@ export interface CreateAppointmentPayload {
 }
 
 // Função para criar uma consulta preenchendo uma disponibilidade existente
-export const createAppointmentApi = (
-  scheduleId: string,
-  payload: CreateAppointmentPayload,
-) => {
+export const createAppointmentApi = (scheduleId: string, payload: CreateAppointmentPayload) => {
   return apiClient.post(`/appointments/schedules/${scheduleId}`, payload);
 };
