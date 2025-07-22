@@ -21,14 +21,10 @@ import {
   Chip,
   Divider,
 } from '@mui/material';
-import AddIcon from '@mui/icons-material/Add';
 import EventAvailableIcon from '@mui/icons-material/EventAvailable';
 
 // Lógica do Redux e Tipos
-import {
-  AppointmentStatus,
-  type AppointmentStatusValue,
-} from '../types/appointment';
+import { AppointmentStatus, type AppointmentStatusValue } from '../types/appointment';
 import type { AppDispatch, RootState } from '../store';
 import { fetchNutritionistAppointments } from '../store/slices/appointments/nutritionistAppointmentSlice';
 
@@ -96,15 +92,9 @@ const AppointmentsNutritionistPage = () => {
             {appointments.map((appt) => (
               <TableRow key={appt.id}>
                 <TableCell>{appt.patient.name}</TableCell>
+                <TableCell>{dayjs(appt.startTime).format('DD/MM/YYYY [às] HH:mm')}</TableCell>
                 <TableCell>
-                  {dayjs(appt.startTime).format('DD/MM/YYYY [às] HH:mm')}
-                </TableCell>
-                <TableCell>
-                  <Chip
-                    label={appt.status}
-                    color={getStatusChipColor(appt.status)}
-                    size="small"
-                  />
+                  <Chip label={appt.status} color={getStatusChipColor(appt.status)} size="small" />
                 </TableCell>
               </TableRow>
             ))}
@@ -125,7 +115,7 @@ const AppointmentsNutritionistPage = () => {
         }}
       >
         <Typography variant="h4" component="h1">
-          Gerenciar Agendamentos
+          Seus Agendamentos
         </Typography>
         <Box sx={{ display: 'flex', gap: 2 }}>
           <Button
@@ -134,15 +124,7 @@ const AppointmentsNutritionistPage = () => {
             component={RouterLink}
             to="/nutricionista/horarios/novo" // Rota para criar novos horários
           >
-            Criar Horários Disponíveis
-          </Button>
-          <Button
-            variant="contained"
-            startIcon={<AddIcon />}
-            component={RouterLink}
-            to="/nutricionista/agendamentos/novo" // Rota para criar uma nova consulta para um paciente
-          >
-            Agendar Consulta
+            Gerenciar Horários / Agendamentos
           </Button>
         </Box>
       </Box>

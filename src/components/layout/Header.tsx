@@ -15,10 +15,12 @@ import MailIcon from '@mui/icons-material/Mail';
 import NotificationsIcon from '@mui/icons-material/Notifications';
 import MoreIcon from '@mui/icons-material/MoreVert';
 import { signOutUser } from '../../store/slices/auth/authThunk';
-import { useDispatch } from 'react-redux';
+import { useDispatch, useSelector } from 'react-redux';
 import React from 'react';
-import type { AppDispatch } from '../../store';
+import type { AppDispatch, RootState } from '../../store';
 import { useNavigate } from 'react-router-dom';
+import { Link as RouterLink } from 'react-router-dom';
+import { UserRole } from '../../types/user';
 
 const Search = styled('div')(({ theme }) => ({
   position: 'relative',
@@ -63,15 +65,16 @@ const StyledInputBase = styled(InputBase)(({ theme }) => ({
 export default function PrimarySearchAppBar() {
   const dispatch = useDispatch<AppDispatch>();
   const navigate = useNavigate();
+  const { userInfo } = useSelector((state: RootState) => state.signIn);
 
   const [anchorEl, setAnchorEl] = React.useState<null | HTMLElement>(null);
-  const [mobileMoreAnchorEl, setMobileMoreAnchorEl] =
-    React.useState<null | HTMLElement>(null);
+  const [mobileMoreAnchorEl, setMobileMoreAnchorEl] = React.useState<null | HTMLElement>(null);
 
   const isMenuOpen = Boolean(anchorEl);
   const isMobileMenuOpen = Boolean(mobileMoreAnchorEl);
 
   const handleNavigateToProfile = () => {
+    handleMenuClose();
     navigate('/perfil/nutricionista');
   };
 
@@ -145,11 +148,7 @@ export default function PrimarySearchAppBar() {
         <p>Mensagens</p>
       </MenuItem>
       <MenuItem>
-        <IconButton
-          size="large"
-          aria-label="show new notifications"
-          color="inherit"
-        >
+        <IconButton size="large" aria-label="show new notifications" color="inherit">
           <Badge badgeContent={0} color="error">
             <NotificationsIcon />
           </Badge>
@@ -181,8 +180,18 @@ export default function PrimarySearchAppBar() {
           <Typography
             variant="h6"
             noWrap
-            component="div"
-            sx={{ display: { xs: 'none', sm: 'block' } }}
+            component={RouterLink}
+            to={
+              userInfo?.role === UserRole.ROLE_NUTRITIONIST
+                ? '/dashboard/nutricionista'
+                : '/dashboard/paciente'
+            }
+            sx={{
+              display: { xs: 'none', sm: 'block' },
+              color: 'inherit', // Garante que a cor seja a mesma do texto da AppBar
+              textDecoration: 'none', // Remove o sublinhado padrão de links
+              cursor: 'pointer', // Muda o cursor para indicar que é clicável
+            }}
           >
             Nutri App
           </Typography>
@@ -190,27 +199,16 @@ export default function PrimarySearchAppBar() {
             <SearchIconWrapper>
               <SearchIcon />
             </SearchIconWrapper>
-            <StyledInputBase
-              placeholder="Search…"
-              inputProps={{ 'aria-label': 'search' }}
-            />
+            <StyledInputBase placeholder="Search…" inputProps={{ 'aria-label': 'search' }} />
           </Search>
           <Box sx={{ flexGrow: 1 }} />
           <Box sx={{ display: { xs: 'none', md: 'flex' } }}>
-            <IconButton
-              size="large"
-              aria-label="show new mails"
-              color="inherit"
-            >
+            <IconButton size="large" aria-label="show new mails" color="inherit">
               <Badge badgeContent={1} color="error">
                 <MailIcon />
               </Badge>
             </IconButton>
-            <IconButton
-              size="large"
-              aria-label="show 0 ew notifications"
-              color="inherit"
-            >
+            <IconButton size="large" aria-label="show 0 ew notifications" color="inherit">
               <Badge badgeContent={1} color="error">
                 <NotificationsIcon />
               </Badge>

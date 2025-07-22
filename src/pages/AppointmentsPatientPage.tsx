@@ -19,20 +19,16 @@ import {
 } from '@mui/material';
 
 import dayjs from 'dayjs';
-import {
-  AppointmentStatus,
-  type AppointmentStatusEnum,
-} from '../types/appointment';
+import { AppointmentStatus, type AppointmentStatusEnum } from '../types/appointment';
 import type { AppDispatch, RootState } from '../store';
 import { fetchFutureAppointments } from '../store/slices/appointments/appointmentSlice';
 import { Link as RouterLink } from 'react-router-dom';
 import AddIcon from '@mui/icons-material/Add';
+import type { CalendarPatientAppointment } from '../types/schedule';
 
 const AppointmentsPatientPage = () => {
   const dispatch = useDispatch<AppDispatch>();
-  const { appointments, status, error } = useSelector(
-    (state: RootState) => state.appointments,
-  );
+  const { appointments, status, error } = useSelector((state: RootState) => state.appointments);
 
   useEffect(() => {
     // mudar para enum
@@ -75,11 +71,7 @@ const AppointmentsPatientPage = () => {
     }
 
     if (status === 'succeeded' && appointments.length === 0) {
-      return (
-        <Typography sx={{ mt: 4 }}>
-          Você ainda não possui agendamentos.
-        </Typography>
-      );
+      return <Typography sx={{ mt: 4 }}>Você ainda não possui agendamentos.</Typography>;
     }
 
     return (
@@ -95,15 +87,12 @@ const AppointmentsPatientPage = () => {
               </TableRow>
             </TableHead>
             <TableBody>
-              {appointments.map((appointment) => (
+              {(appointments as CalendarPatientAppointment[]).map((appointment) => (
                 <TableRow key={appointment.id}>
+                  <TableCell>{appointment.isRemote ? 'TELECONSULTA' : 'PRESENCIAL'}</TableCell>
+                  <TableCell>{appointment.nutritionist?.name}</TableCell>
                   <TableCell>
-                    {appointment.isRemote ? 'TELECONSULTA' : 'PRESENCIAL'}
-                  </TableCell>
-                  <TableCell>{appointment.nutritionistName}</TableCell>
-                  <TableCell>
-                    {dayjs(appointment.startTime).format('DD/MM/YYYY - HH:mm')}{' '}
-                    -{' '}
+                    {dayjs(appointment.startTime).format('DD/MM/YYYY - HH:mm')} -{' '}
                     {dayjs(appointment.startTime)
                       .add(appointment.durationMinutes, 'minute')
                       .format('HH:mm')}
@@ -111,7 +100,7 @@ const AppointmentsPatientPage = () => {
                   <TableCell>
                     <Chip
                       label={appointment.status}
-                      color={getStatusChipColor(appointment.status)}
+                      color={getStatusChipColor(appointment.status ?? 'CANCELADO')}
                       size="small"
                     />
                   </TableCell>

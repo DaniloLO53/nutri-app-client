@@ -1,9 +1,9 @@
 import type { NutritionistAppointment } from '../types/nutritionistsAppointment';
-import type { CalendarAppointment } from '../types/schedule';
+import type { CalendarPatientAppointment } from '../types/schedule';
 import { apiClient } from './config/axiosConfig';
 
 export const fetchFutureAppointmentsApi = () => {
-  return apiClient.get<CalendarAppointment[]>('/appointments/patient/future');
+  return apiClient.get<CalendarPatientAppointment[]>('/patients/me/appointments');
 };
 
 export const fetchNutritionistAppointmentsApi = () => {
