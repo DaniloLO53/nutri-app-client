@@ -17,7 +17,7 @@ import NotFoundPage from './pages/NotFoundPage';
 import MainLayout from './components/layout/MainLayout';
 import AppointmentsPatientPage from './pages/AppointmentsPatientPage';
 import { StateStatus } from './store/slices/statusEnum';
-import AppointmentSearchByParamsPage from './pages/AppointmentSearchByParamsPage';
+import AvailableNutritionistsSearchByParamsPage from './pages/AvailableNutritionistsSearchByParamsPage';
 import { UserRole } from './types/user';
 import DashboardNutritionistPage from './pages/DashboardNutritionistPage';
 import NutritionistProfilePage from './pages/NutritionistProfilePage';
@@ -139,7 +139,7 @@ function App() {
             path="/agendamentos/novo"
             element={
               <PrivateRoute allowedRoles={[UserRole.ROLE_PATIENT]}>
-                <AppointmentSearchByParamsPage />
+                <AvailableNutritionistsSearchByParamsPage />
               </PrivateRoute>
             }
           />

@@ -6,16 +6,17 @@ interface PatientOrNutritionist {
   email: string;
 }
 
-export interface Schedule {
+export interface AvailableNutritionist {
   id: string;
   nutritionistName: string;
+  address: string;
   ibgeApiCity: string;
   ibgeApiState: string;
   acceptsRemote: string;
 }
 
-export interface ScheduleSearchState {
-  schedules: Schedule[];
+export interface AvailableNutritionistState {
+  nuritionists: AvailableNutritionist[];
   status: 'idle' | 'loading' | 'succeeded' | 'failed';
   error: string | null;
 }

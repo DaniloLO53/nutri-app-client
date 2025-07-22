@@ -1,15 +1,15 @@
-import type { Schedule } from '../types/schedule';
+import type { AvailableNutritionist } from '../types/schedule';
 import { apiClient } from './config/axiosConfig';
 
 // Define os parâmetros de busca que podem ser enviados
-export interface SearchParams {
+export interface AvailableNutritionistSearchParams {
   nutritionistName?: string;
   ibgeApiCity?: string;
   ibgeApiState?: string;
   acceptsRemote?: boolean;
 }
 
-export const searchSchedulesApi = (params: SearchParams) => {
+export const searchAvailableNutritionistsApi = (params: AvailableNutritionistSearchParams) => {
   const queryParams = new URLSearchParams();
 
   if (params.nutritionistName) {
@@ -27,7 +27,5 @@ export const searchSchedulesApi = (params: SearchParams) => {
     queryParams.append('acceptsRemote', 'true');
   }
 
-  return apiClient.get<Schedule[]>(
-    `/profiles/search?${queryParams.toString()}`,
-  );
+  return apiClient.get<AvailableNutritionist[]>(`/nutritionists/search?${queryParams.toString()}`);
 };

@@ -25,9 +25,9 @@ import type { AppDispatch, RootState } from '../store';
 import type { IBGEState, IBGECity } from '../types/ibgeApiRegions';
 import {
   clearSearchResults,
-  searchschedules,
-} from '../store/slices/schedules/scheduleSearchSlice';
-import ScheduleResultCard from '../components/ScheduleResultCard';
+  searchAvailableNutritionists,
+} from '../store/slices/schedules/availableNutritionistSearchSlice';
+import AvailableNutritionistResultCard from '../components/AvailableNutritionistResultCard';
 
 interface SearchFormInputs {
   nutritionistName: string;
@@ -38,8 +38,8 @@ interface SearchFormInputs {
 
 const AppointmentCreatePage = () => {
   const dispatch = useDispatch<AppDispatch>();
-  const { schedules, status, error } = useSelector(
-    (state: RootState) => state.scheduleSearch,
+  const { nuritionists, status, error } = useSelector(
+    (state: RootState) => state.availableNutritionistSearch,
   );
 
   const [states, setStates] = useState<IBGEState[]>([]);
@@ -47,16 +47,14 @@ const AppointmentCreatePage = () => {
   const [isLoadingStates, setIsLoadingStates] = useState(false);
   const [isLoadingCities, setIsLoadingCities] = useState(false);
 
-  const { register, handleSubmit, watch, setValue } = useForm<SearchFormInputs>(
-    {
-      defaultValues: {
-        nutritionistName: '',
-        ibgeApiState: '',
-        ibgeApiCity: '',
-        acceptsRemote: false,
-      },
+  const { register, handleSubmit, watch, setValue } = useForm<SearchFormInputs>({
+    defaultValues: {
+      nutritionistName: '',
+      ibgeApiState: '',
+      ibgeApiCity: '',
+      acceptsRemote: false,
     },
-  );
+  });
 
   const selectedState = watch('ibgeApiState');
   const isRemote = watch('acceptsRemote');
@@ -126,7 +124,7 @@ const AppointmentCreatePage = () => {
   }, [dispatch]);
 
   const onSubmit: SubmitHandler<SearchFormInputs> = (data) => {
-    dispatch(searchschedules(data));
+    dispatch(searchAvailableNutritionists(data));
   };
 
   const renderResults = () => {
@@ -146,7 +144,7 @@ const AppointmentCreatePage = () => {
       );
     }
 
-    if (status === 'succeeded' && schedules.length === 0) {
+    if (status === 'succeeded' && nuritionists.length === 0) {
       return (
         <Typography sx={{ mt: 2 }}>
           Nenhum nutricionista encontrado com os critérios informados.
@@ -156,8 +154,8 @@ const AppointmentCreatePage = () => {
 
     return (
       <Box sx={{ mt: 4 }}>
-        {schedules.map((schedule) => (
-          <ScheduleResultCard key={schedule.id} schedule={schedule} />
+        {nuritionists.map((nutritionist) => (
+          <AvailableNutritionistResultCard key={nutritionist.id} nutritionist={nutritionist} />
         ))}
       </Box>
     );
@@ -184,11 +182,7 @@ const AppointmentCreatePage = () => {
             mb: 2,
           }}
         >
-          <TextField
-            fullWidth
-            label="Nome do Profissional"
-            {...register('nutritionistName')}
-          />
+          <TextField fullWidth label="Nome do Profissional" {...register('nutritionistName')} />
 
           <FormControlLabel
             control={<Checkbox {...register('acceptsRemote')} />}
@@ -215,10 +209,7 @@ const AppointmentCreatePage = () => {
             </Select>
           </FormControl>
 
-          <FormControl
-            fullWidth
-            disabled={!selectedState || isLoadingCities || isRemote}
-          >
+          <FormControl fullWidth disabled={!selectedState || isLoadingCities || isRemote}>
             <InputLabel id="city-select-label">Município</InputLabel>
             <Select
               labelId="city-select-label"
@@ -237,11 +228,7 @@ const AppointmentCreatePage = () => {
             </Select>
           </FormControl>
         </Box>
-        <Button
-          type="submit"
-          variant="contained"
-          disabled={status === 'loading'}
-        >
+        <Button type="submit" variant="contained" disabled={status === 'loading'}>
           Buscar
         </Button>
       </Paper>
