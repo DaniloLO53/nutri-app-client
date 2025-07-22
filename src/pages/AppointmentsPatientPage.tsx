@@ -71,7 +71,23 @@ const AppointmentsPatientPage = () => {
     }
 
     if (status === 'succeeded' && appointments.length === 0) {
-      return <Typography sx={{ mt: 4 }}>Você ainda não possui agendamentos.</Typography>;
+      return (
+        <>
+          <Typography sx={{ mt: 4 }}>Você ainda não possui agendamentos.</Typography>
+          <Box sx={{ display: 'flex', justifyContent: 'left', mt: 4 }}>
+            <Fab
+              variant="extended"
+              color="primary"
+              aria-label="criar nova consulta"
+              component={RouterLink}
+              to="/agendamentos/novo"
+            >
+              <AddIcon sx={{ mr: 1 }} />
+              Criar Nova Consulta
+            </Fab>
+          </Box>
+        </>
+      );
     }
 
     return (

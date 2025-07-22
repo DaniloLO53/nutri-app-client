@@ -21,5 +21,6 @@ export interface CreateAppointmentPayload {
 
 // Função para criar uma consulta preenchendo uma disponibilidade existente
 export const createAppointmentApi = (scheduleId: string, payload: CreateAppointmentPayload) => {
+  console.log(scheduleId);
   return apiClient.post(`/appointments/schedules/${scheduleId}`, payload);
 };

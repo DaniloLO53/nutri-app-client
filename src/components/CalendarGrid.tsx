@@ -10,7 +10,7 @@ interface CalendarGridProps {
   startOfWeek: dayjs.Dayjs;
   slotDuration: number;
   events: (CalendarSchedule | CalendarNutritionistAppointment)[];
-  onSlotClick: (slotDate: dayjs.Dayjs) => void;
+  onSlotClick?: (slotDate: dayjs.Dayjs) => void;
   onEventClick: (event: CalendarSchedule | CalendarNutritionistAppointment) => void;
 }
 
@@ -100,7 +100,7 @@ const CalendarGrid = ({
                     ? alpha('#ffc107', 0.2) // Uma cor de destaque sutil (amarelo)
                     : undefined,
                 }}
-                onClick={() => onSlotClick(slotStart)} // Reutiliza a variável `slotStart`
+                onClick={() => (onSlotClick ? onSlotClick(slotStart) : null)} // Reutiliza a variável `slotStart`
               />
             );
           }),
@@ -147,7 +147,9 @@ const CalendarGrid = ({
                 cursor: 'pointer',
                 '&:hover': { backgroundColor: 'action.hover' },
               }}
-              onClick={() => onSlotClick(day.hour(time.hour()).minute(time.minute()))}
+              onClick={() =>
+                onSlotClick ? onSlotClick(day.hour(time.hour()).minute(time.minute())) : null
+              }
             />
           )),
         )}
