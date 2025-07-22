@@ -64,7 +64,7 @@ const AvailableNutritionistResultCard = ({
           <Button
             variant="contained"
             component={RouterLink}
-            to={`/agendamentos/confirmar/${nutritionist.id}`}
+            to={`/paciente/horarios/novo/${nutritionist.id}`}
           >
             Agendar
           </Button>

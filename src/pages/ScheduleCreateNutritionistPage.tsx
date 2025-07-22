@@ -27,7 +27,7 @@ import type { AppDispatch, RootState } from '../store';
 import {
   createSchedule,
   deleteSchedule,
-  fetchSchedule,
+  fetchOwnSchedule,
 } from '../store/slices/schedules/scheduleSlice';
 import CalendarGrid from '../components/CalendarGrid';
 import AppointmentCreateNutritionist from '../components/AppointmentCreateNutritionist';
@@ -67,7 +67,7 @@ const ScheduleCreatePage = () => {
 
   useEffect(() => {
     dispatch(
-      fetchSchedule({
+      fetchOwnSchedule({
         startDate: startOfWeek.format('YYYY-MM-DD'), // Envia apenas a data. Ex: "2025-07-13"
         endDate: endOfWeek.format('YYYY-MM-DD'), // Ex: "2025-07-19"
       }),

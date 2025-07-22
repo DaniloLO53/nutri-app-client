@@ -11,9 +11,20 @@ export const updateNutritionistProfileApi = (profileData: Partial<NutritionistPr
   return apiClient.put<NutritionistProfile>('/nutritionists/me', profileData);
 };
 
-export const fetchScheduleApi = (startDate: string, endDate: string) => {
+export const fetchOwnNutritionistScheduleApi = (startDate: string, endDate: string) => {
   const params = new URLSearchParams({ startDate, endDate });
   return apiClient.get<CalendarSchedule[]>(`/nutritionists/me/schedules?${params.toString()}`);
+};
+
+export const fetchNutritionistScheduleApi = (
+  startDate: string,
+  endDate: string,
+  nutritionistId: string,
+) => {
+  const params = new URLSearchParams({ startDate, endDate });
+  return apiClient.get<CalendarSchedule[]>(
+    `/nutritionists/${nutritionistId}/schedules?${params.toString()}`,
+  );
 };
 
 export const createScheduleApi = (data: {

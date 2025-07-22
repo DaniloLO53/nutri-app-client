@@ -154,8 +154,11 @@ const AppointmentCreatePage = () => {
 
     return (
       <Box sx={{ mt: 4 }}>
-        {nuritionists.map((nutritionist) => (
-          <AvailableNutritionistResultCard key={nutritionist.id} nutritionist={nutritionist} />
+        {nuritionists.map((nutritionist, index) => (
+          <AvailableNutritionistResultCard
+            key={`${nutritionist.id}-${index}`}
+            nutritionist={nutritionist}
+          />
         ))}
       </Box>
     );

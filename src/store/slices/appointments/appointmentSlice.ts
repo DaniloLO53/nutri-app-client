@@ -7,20 +7,27 @@ import {
   fetchFutureAppointmentsApi,
 } from '../../../services/appointmentService';
 import type { CalendarNutritionistAppointment } from '../../../types/schedule';
-import { fetchSchedule } from '../schedules/scheduleSlice';
+import { fetchOwnSchedule } from '../schedules/scheduleSlice';
+import type { RootState } from '../..';
+import { UserRole } from '../../../types/user';
 
 export const createAppointmentForPatient = createAsyncThunk<
   CalendarNutritionistAppointment, // <-- 2. Use o novo tipo como tipo de retorno
   { scheduleId: string; patientId: string; isRemote: boolean; startDate: string; endDate: string },
   { rejectValue: string }
->('schedule/createAppointment', async (data, { rejectWithValue, dispatch }) => {
+>('schedule/createAppointment', async (data, { rejectWithValue, dispatch, getState }) => {
   const { scheduleId, patientId, isRemote, startDate, endDate } = data;
+  const state = getState() as RootState;
+  const { userInfo } = state.signIn;
+
   try {
     const response = await createAppointmentApi(scheduleId, {
       patientId,
       isRemote,
     });
-    dispatch(fetchSchedule({ startDate, endDate }));
+    if (userInfo?.role === UserRole.ROLE_NUTRITIONIST) {
+      dispatch(fetchOwnSchedule({ startDate, endDate }));
+    }
 
     // 3. Retorne o objeto composto com a resposta da API e o ID original
     return response.data;
@@ -39,7 +46,7 @@ export const deleteAppointment = createAsyncThunk<
   async ({ startDate, endDate, appointmentId }, { rejectWithValue, dispatch }) => {
     try {
       await deleteAppointmentApi(appointmentId);
-      dispatch(fetchSchedule({ startDate, endDate }));
+      dispatch(fetchOwnSchedule({ startDate, endDate }));
     } catch (error) {
       const axiosError = error as AxiosError<{ message: string }>;
       return rejectWithValue(axiosError.response?.data?.message || 'Erro ao buscar a agenda.');

@@ -3,7 +3,8 @@ import { AxiosError } from 'axios';
 import {
   createScheduleApi,
   deleteScheduleApi,
-  fetchScheduleApi,
+  fetchNutritionistScheduleApi,
+  fetchOwnNutritionistScheduleApi,
 } from '../../../services/nutritionistService';
 import type { CalendarSchedule, ScheduleState } from '../../../types/schedule';
 import dayjs from 'dayjs';
@@ -11,13 +12,29 @@ import dayjs from 'dayjs';
 /**
  * Thunk para buscar os eventos (consultas e disponibilidades) de uma semana.
  */
-export const fetchSchedule = createAsyncThunk<
+export const fetchOwnSchedule = createAsyncThunk<
   CalendarSchedule[], // Tipo do retorno em caso de sucesso
   { startDate: string; endDate: string }, // Tipo do argumento de entrada
   { rejectValue: string } // Tipo do retorno em caso de falha
->('schedule/fetch', async ({ startDate, endDate }, { rejectWithValue }) => {
+>('schedule/me/fetch', async ({ startDate, endDate }, { rejectWithValue }) => {
   try {
-    const response = await fetchScheduleApi(startDate, endDate);
+    const response = await fetchOwnNutritionistScheduleApi(startDate, endDate);
+    return response.data;
+  } catch (error) {
+    const axiosError = error as AxiosError<{ message: string }>;
+    console.error(axiosError);
+    return rejectWithValue(axiosError.response?.data?.message || 'Erro ao buscar a agenda.');
+  }
+});
+
+export const fetchNutritionistSchedule = createAsyncThunk<
+  CalendarSchedule[], // Tipo do retorno em caso de sucesso
+  { startDate: string; endDate: string; nutritionistId: string }, // Tipo do argumento de entrada
+  { rejectValue: string } // Tipo do retorno em caso de falha
+>('schedule/fetch', async ({ startDate, endDate, nutritionistId }, { rejectWithValue }) => {
+  try {
+    if (!nutritionistId) return [];
+    const response = await fetchNutritionistScheduleApi(startDate, endDate, nutritionistId);
     return response.data;
   } catch (error) {
     const axiosError = error as AxiosError<{ message: string }>;
@@ -114,17 +131,35 @@ const scheduleSlice = createSlice({
   },
   extraReducers: (builder) => {
     builder
-      // FETCH SCHEDULE
-      .addCase(fetchSchedule.pending, (state) => {
+      // FETCH NUTRTITIONIST SCHEDULE
+      .addCase(fetchNutritionistSchedule.pending, (state) => {
         state.status = 'loading';
         state.error = null;
       })
-      .addCase(fetchSchedule.fulfilled, (state, action: PayloadAction<CalendarSchedule[]>) => {
+      .addCase(
+        fetchNutritionistSchedule.fulfilled,
+        (state, action: PayloadAction<CalendarSchedule[]>) => {
+          state.status = 'succeeded';
+          console.log('PAYLOAD FROM FETCH SCHEDULE', action.payload);
+          state.schedules = action.payload;
+        },
+      )
+      .addCase(fetchNutritionistSchedule.rejected, (state, action) => {
+        state.status = 'failed';
+        state.error = action.payload ?? 'Ocorreu um erro desconhecido.';
+      })
+
+      // FETCH OWN SCHEDULE
+      .addCase(fetchOwnSchedule.pending, (state) => {
+        state.status = 'loading';
+        state.error = null;
+      })
+      .addCase(fetchOwnSchedule.fulfilled, (state, action: PayloadAction<CalendarSchedule[]>) => {
         state.status = 'succeeded';
         console.log('PAYLOAD FROM FETCH SCHEDULE', action.payload);
         state.schedules = action.payload;
       })
-      .addCase(fetchSchedule.rejected, (state, action) => {
+      .addCase(fetchOwnSchedule.rejected, (state, action) => {
         state.status = 'failed';
         state.error = action.payload ?? 'Ocorreu um erro desconhecido.';
       })
