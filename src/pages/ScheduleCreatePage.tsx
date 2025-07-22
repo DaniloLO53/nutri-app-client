@@ -31,21 +31,18 @@ import {
 } from '../store/slices/schedules/scheduleSlice';
 import CalendarGrid from '../components/CalendarGrid';
 import AppointmentCreateNutritionist from '../components/AppointmentCreateNutritionist';
+import { EventType, type CalendarAppointment, type CalendarSchedule } from '../types/schedule';
 import {
-  EventType,
-  type CalendarAppointment,
-  type CalendarSchedule,
-} from '../types/schedule';
-import { deleteAppointment } from '../store/slices/appointments/appointmentSlice';
+  clearAppointments,
+  deleteAppointment,
+} from '../store/slices/appointments/appointmentSlice';
 
 const DURATIONS = [15, 30, 45, 60];
 
 const ScheduleCreatePage = () => {
   const dispatch = useDispatch<AppDispatch>();
 
-  const { schedules, status: scheduleStatus } = useSelector(
-    (state: RootState) => state.schedule,
-  );
+  const { schedules, status: scheduleStatus } = useSelector((state: RootState) => state.schedule);
   const { appointments, status: appointmentStatus } = useSelector(
     (state: RootState) => state.appointments, // Supondo que o slice se chama 'appointment'
   );
@@ -57,24 +54,21 @@ const ScheduleCreatePage = () => {
   const [currentDate, setCurrentDate] = useState(dayjs());
   const [slotDuration, setSlotDuration] = useState(30);
 
-  const [isAppointmentActionDialogOpen, setIsAppointmentActionDialogOpen] =
-    useState(false);
-  const [selectedAppointment, setSelectedAppointment] =
-    useState<CalendarAppointment | null>(null);
+  const [isAppointmentActionDialogOpen, setIsAppointmentActionDialogOpen] = useState(false);
+  const [selectedAppointment, setSelectedAppointment] = useState<CalendarAppointment | null>(null);
 
   const [isCreateDialogOpen, setIsCreateDialogOpen] = useState(false);
-  const [isScheduleActionDialogOpen, setIsScheduleActionDialogOpen] =
-    useState(false);
+  const [isScheduleActionDialogOpen, setIsScheduleActionDialogOpen] = useState(false);
   const [isAppointmentCreateOpen, setIsAppointmentCreateOpen] = useState(false);
 
-  const [selectedSchedule, setSelectedSchedule] =
-    useState<CalendarSchedule | null>(null); // NOVO: Estado para o evento selecionado
+  const [selectedSchedule, setSelectedSchedule] = useState<CalendarSchedule | null>(null); // NOVO: Estado para o evento selecionado
   const [selectedSlot, setSelectedSlot] = useState<Dayjs | null>(null);
 
   const startOfWeek = useMemo(() => currentDate.startOf('week'), [currentDate]);
   const endOfWeek = useMemo(() => currentDate.endOf('week'), [currentDate]);
 
   useEffect(() => {
+    clearAppointments(); // Clear appointments from Nutritionist Appointments Page (it's populated in useMemo)
     dispatch(
       fetchSchedule({
         startDate: startOfWeek.format('YYYY-MM-DD'), // Envia apenas a data. Ex: "2025-07-13"
@@ -140,8 +134,7 @@ const ScheduleCreatePage = () => {
   const handleCreateAppointment = () => {
     // Usa o slot clicado, seja de uma área vazia ou de uma disponibilidade
     const targetSlot =
-      selectedSlot ||
-      (selectedSchedule ? dayjs(selectedSchedule.startTime) : null);
+      selectedSlot || (selectedSchedule ? dayjs(selectedSchedule.startTime) : null);
     if (!targetSlot) return;
 
     setSelectedSlot(targetSlot); // Garante que o slot esteja salvo
@@ -238,14 +231,8 @@ const ScheduleCreatePage = () => {
         <DialogContent>
           <DialogContentText>
             O que você deseja fazer com o horário das{' '}
-            <strong>
-              {dayjs(selectedSchedule?.startTime).format('HH:mm')}
-            </strong>{' '}
-            do dia{' '}
-            <strong>
-              {dayjs(selectedSchedule?.startTime).format('DD/MM/YYYY')}
-            </strong>
-            ?
+            <strong>{dayjs(selectedSchedule?.startTime).format('HH:mm')}</strong> do dia{' '}
+            <strong>{dayjs(selectedSchedule?.startTime).format('DD/MM/YYYY')}</strong>?
           </DialogContentText>
         </DialogContent>
         <DialogActions sx={{ p: 2, justifyContent: 'space-between' }}>
@@ -268,27 +255,17 @@ const ScheduleCreatePage = () => {
         <DialogContent>
           <DialogContentText>
             Você selecionou a consulta com o paciente{' '}
-            <strong>{selectedAppointment?.patient?.name}</strong>, marcada para
-            as{' '}
-            <strong>
-              {dayjs(selectedAppointment?.startTime).format('HH:mm')}
-            </strong>{' '}
-            do dia{' '}
-            <strong>
-              {dayjs(selectedAppointment?.startTime).format('DD/MM/YYYY')}
-            </strong>
-            . Deseja excluir esta consulta?
+            <strong>{selectedAppointment?.patient?.name}</strong>, marcada para as{' '}
+            <strong>{dayjs(selectedAppointment?.startTime).format('HH:mm')}</strong> do dia{' '}
+            <strong>{dayjs(selectedAppointment?.startTime).format('DD/MM/YYYY')}</strong>. Deseja
+            excluir esta consulta?
           </DialogContentText>
         </DialogContent>
         <DialogActions sx={{ p: 2 }}>
           <Button onClick={handleCloseDialogs} color="secondary">
             Cancelar
           </Button>
-          <Button
-            onClick={handleConfirmAppointmentDelete}
-            variant="contained"
-            color="error"
-          >
+          <Button onClick={handleConfirmAppointmentDelete} variant="contained" color="error">
             Excluir Consulta
           </Button>
         </DialogActions>
