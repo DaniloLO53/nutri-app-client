@@ -2,7 +2,7 @@ import { configureStore } from '@reduxjs/toolkit';
 import registerReducer from './slices/auth/registerPatientSlice';
 import signInUserReducer from './slices/auth/signInSlice';
 import appointmentReducer from './slices/appointments/appointmentSlice';
-import scheduleSearchReducer from './slices/schedules/scheduleSearchSlice';
+import availableNutritionistSearchReducer from './slices/schedules/availableNutritionistSearchSlice';
 import nutritionistProfileReducer from './slices/nutritionistProfiles/nutritionistProfileSlice';
 import nutritionistAppointmentReducer from './slices/appointments/nutritionistAppointmentSlice';
 import scheduleReducer from './slices/schedules/scheduleSlice';
@@ -15,7 +15,7 @@ export const store = configureStore({
     register: registerReducer,
     signIn: signInUserReducer,
     appointments: appointmentReducer,
-    scheduleSearch: scheduleSearchReducer,
+    availableNutritionistSearch: availableNutritionistSearchReducer,
     nutritionistProfile: nutritionistProfileReducer,
     nutritionistAppointments: nutritionistAppointmentReducer,
     schedule: scheduleReducer,
