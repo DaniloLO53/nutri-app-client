@@ -3,16 +3,33 @@ import { alpha, Box, Paper, Typography } from '@mui/material';
 import {
   EventType,
   type CalendarNutritionistAppointment,
+  type CalendarPatientAppointment,
   type CalendarSchedule,
 } from '../types/schedule';
+import { AppointmentStatus, type AppointmentStatusValue } from '../types/appointment';
+import { orange } from '@mui/material/colors';
 
 interface CalendarGridProps {
   startOfWeek: dayjs.Dayjs;
   slotDuration: number;
-  events: (CalendarSchedule | CalendarNutritionistAppointment)[];
+  events: (CalendarSchedule | CalendarNutritionistAppointment | CalendarPatientAppointment)[];
   onSlotClick?: (slotDate: dayjs.Dayjs) => void;
   onEventClick: (event: CalendarSchedule | CalendarNutritionistAppointment) => void;
 }
+
+const statusStyleMap: Record<AppointmentStatusValue, { bg: string; border: string }> = {
+  [AppointmentStatus.AGENDADO]: { bg: 'warning.light', border: 'warning.dark' },
+  [AppointmentStatus.CONFIRMADO]: {
+    bg: 'success.light',
+    border: 'success.dark',
+  },
+  [AppointmentStatus.CONCLUIDO]: { bg: 'grey.400', border: 'grey.600' },
+  [AppointmentStatus.CANCELADO]: { bg: 'error.light', border: 'error.dark' },
+  [AppointmentStatus.NAO_COMPARECEU]: {
+    bg: orange[300],
+    border: orange[500],
+  },
+};
 
 const CalendarGrid = ({
   startOfWeek,
@@ -34,29 +51,45 @@ const CalendarGrid = ({
 
   // Função para calcular a posição e tamanho de um evento no grid
   const getEventStyle = (event: CalendarSchedule | CalendarNutritionistAppointment) => {
+    // A lógica de cálculo de posição permanece a mesma
     const eventStart = dayjs(event.startTime);
     const dayIndex = eventStart.diff(startOfWeek.startOf('day'), 'day');
     const startOfDay = eventStart.startOf('day').hour(8);
     const minutesFromStart = eventStart.diff(startOfDay, 'minute');
-
     const startRow = Math.floor(minutesFromStart / gridInterval) + 2;
     const eventEndMinutes = minutesFromStart + event.durationMinutes;
     const endRow = Math.floor(eventEndMinutes / gridInterval) + 2;
-
-    // Em vez de 'span', definimos explicitamente a linha de início e de fim
     const gridRowValue = `${startRow} / ${endRow}`;
 
+    // Lógica de estilo condicional
+    let styleProps = {
+      backgroundColor: 'primary.light',
+      color: 'primary.contrastText',
+      borderLeft: `3px solid primary.dark`,
+    };
+
+    if (event.type === EventType.APPOINTMENT) {
+      const appointment = event as CalendarNutritionistAppointment;
+      const statusStyle = statusStyleMap[appointment.status as AppointmentStatusValue] || null;
+
+      if (statusStyle) {
+        styleProps = {
+          backgroundColor: statusStyle.bg,
+          color: 'common.white', // Assumindo texto branco/claro para todas as cores
+          borderLeft: `3px solid ${statusStyle.border}`,
+        };
+      }
+    }
+
     return {
-      gridColumn: dayIndex + 2, // Coluna do dia da semana (permanece igual)
-      gridRow: gridRowValue, // Linha de início / Linha de fim
-      backgroundColor: event.type === EventType.APPOINTMENT ? 'error.light' : 'primary.light',
-      color: event.type === EventType.APPOINTMENT ? 'error.contrastText' : 'primary.contrastText',
-      borderLeft: `3px solid ${event.type === EventType.APPOINTMENT ? 'error.dark' : 'primary.dark'}`,
+      gridColumn: dayIndex + 2,
+      gridRow: gridRowValue,
+      ...styleProps,
       p: 0.5,
       borderRadius: '4px',
       fontSize: '12px',
       overflow: 'hidden',
-      zIndex: 1, // Garante que o evento fique sobre as linhas da grade
+      zIndex: 1,
     };
   };
 
@@ -82,8 +115,6 @@ const CalendarGrid = ({
 
             // Verifica se a hora atual está dentro do intervalo deste slot
             const isCurrentSlot = now.isAfter(slotStart) && now.isBefore(slotEnd);
-
-            if (isCurrentSlot) console.log(time.hour(), time.minute());
 
             return (
               <Box

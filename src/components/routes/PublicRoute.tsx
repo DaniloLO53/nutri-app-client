@@ -16,8 +16,6 @@ const PublicRoute = ({ children }: PublicRouteProps) => {
     // A propriedade 'replace' substitui a entrada atual no histórico
     // em vez de adicionar uma nova, evitando o loop do botão "voltar".
 
-    console.log({ userInfo });
-
     const redirectTo =
       userInfo.role === UserRole.ROLE_NUTRITIONIST
         ? '/dashboard/nutricionista'
