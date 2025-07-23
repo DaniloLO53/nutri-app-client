@@ -4,7 +4,7 @@ import type { AppointmentState } from '../../../types/appointment';
 import {
   createAppointmentApi,
   cancelAppointmentApi,
-  fetchFutureAppointmentsApi,
+  fetchPatientAppointmentsApi,
 } from '../../../services/appointmentService';
 import type { CalendarNutritionistAppointment } from '../../../types/schedule';
 import { fetchOwnSchedule } from '../schedules/scheduleSlice';
@@ -61,7 +61,7 @@ export const fetchFutureAppointments = createAsyncThunk<
   { rejectValue: string }
 >('appointments/fetchAll', async (_, { rejectWithValue }) => {
   try {
-    const response = await fetchFutureAppointmentsApi();
+    const response = await fetchPatientAppointmentsApi();
     return response.data;
   } catch (error) {
     const axiosError = error as AxiosError<{ message: string }>;
