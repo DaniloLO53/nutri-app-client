@@ -90,6 +90,8 @@ const AppointmentsPatientPage = () => {
       );
     }
 
+    console.log({ appointments });
+
     return (
       <>
         <TableContainer component={Paper} sx={{ mt: 4 }}>

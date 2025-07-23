@@ -45,7 +45,7 @@ export interface CalendarNutritionistAppointment {
   patient?: PatientOrNutritionist;
   startTime: string; // Formato ISO 8601: "2025-07-21T10:00:00Z"
   durationMinutes: number;
-  isRemote: boolean;
+  isRemote?: boolean;
   status?: AppointmentStatusEnum;
 }
 
@@ -57,6 +57,7 @@ export interface CalendarPatientAppointment {
   durationMinutes: number;
   isRemote: boolean;
   status?: AppointmentStatusEnum;
+  location: Location;
 }
 
 // O estado para o slice do Redux

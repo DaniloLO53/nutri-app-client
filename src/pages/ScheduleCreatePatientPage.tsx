@@ -24,6 +24,7 @@ import {
 } from '@mui/material';
 import ArrowBackIosNewIcon from '@mui/icons-material/ArrowBackIosNew';
 import ArrowForwardIosIcon from '@mui/icons-material/ArrowForwardIos';
+import CheckCircleOutlineIcon from '@mui/icons-material/CheckCircleOutline'; // Importe um ícone de sucesso
 
 import type { AppDispatch, RootState } from '../store';
 import { fetchNutritionistSchedule } from '../store/slices/schedules/scheduleSlice';
@@ -33,7 +34,7 @@ import {
   type CalendarNutritionistAppointment,
   type CalendarSchedule,
 } from '../types/schedule';
-import { useParams } from 'react-router-dom';
+import { useNavigate, useParams } from 'react-router-dom';
 import { createAppointmentForPatient } from '../store/slices/appointments/appointmentSlice';
 
 const DURATIONS = [15, 30, 45, 60];
@@ -45,12 +46,14 @@ const ScheduleCreatePagePatient = () => {
   const { nutricionistaId: nutritionistId } = useParams();
 
   const { schedules, status: scheduleStatus } = useSelector((state: RootState) => state.schedule);
-  const { appointments } = useSelector((state: RootState) => state.appointments);
 
   const [currentDate, setCurrentDate] = useState(dayjs());
   const [slotDuration, setSlotDuration] = useState(30);
 
   const [isRemote, setIsRemote] = useState(false);
+
+  const navigate = useNavigate(); // Hook para navegação
+  const [isBookingSuccess, setIsBookingSuccess] = useState(false); // Estado para controlar a tela de sucesso
 
   const [isScheduleActionDialogOpen, setIsScheduleActionDialogOpen] = useState(false);
 
@@ -60,6 +63,18 @@ const ScheduleCreatePagePatient = () => {
   const endOfWeek = useMemo(() => currentDate.endOf('week'), [currentDate]);
 
   useEffect(() => {
+    // Se o agendamento foi um sucesso, espere 3 segundos e redirecione
+    if (isBookingSuccess) {
+      const timer = setTimeout(() => {
+        navigate('/dashboard/paciente');
+      }, 3000); // 3000ms = 3 segundos
+
+      // Função de limpeza: se o componente for desmontado, limpa o temporizador
+      return () => clearTimeout(timer);
+    }
+  }, [isBookingSuccess, navigate]);
+
+  useEffect(() => {
     dispatch(
       fetchNutritionistSchedule({
         startDate: startOfWeek.format('YYYY-MM-DD'), // Envia apenas a data. Ex: "2025-07-13"
@@ -67,26 +82,35 @@ const ScheduleCreatePagePatient = () => {
         nutritionistId: nutritionistId || '',
       }),
     );
-  }, [dispatch, startOfWeek, endOfWeek, nutritionistId, appointments.length]);
+  }, [dispatch, startOfWeek, endOfWeek, nutritionistId]);
 
-  const handleConfirmAppointment = () => {
+  // Em ScheduleCreatePagePatient.tsx
+
+  const handleConfirmAppointment = async () => {
     if (!selectedSchedule || !userInfo?.id) {
       console.error('Horário ou ID do paciente não encontrado!');
       return;
     }
 
-    dispatch(
-      createAppointmentForPatient({
-        scheduleId: selectedSchedule.id,
-        patientId: userInfo?.id, // Usa o ID do usuário logado
-        isRemote: isRemote,
-        // Passa o intervalo de datas para o thunk poder refazer o fetch da agenda
-        startDate: startOfWeek.format('YYYY-MM-DD'),
-        endDate: endOfWeek.format('YYYY-MM-DD'),
-      }),
-    );
+    try {
+      // Despacha a ação e espera o resultado com .unwrap()
+      await dispatch(
+        createAppointmentForPatient({
+          scheduleId: selectedSchedule.id,
+          patientId: userInfo.id,
+          isRemote: isRemote,
+          startDate: startOfWeek.format('YYYY-MM-DD'),
+          endDate: endOfWeek.format('YYYY-MM-DD'),
+        }),
+      ).unwrap();
 
-    handleCloseDialogs(); // Fecha o diálogo após a ação
+      // Se a linha acima não lançou um erro, o agendamento foi um sucesso!
+      setIsBookingSuccess(true);
+    } catch (error) {
+      // Se o thunk for rejeitado, o erro será capturado aqui
+      console.error('Falha ao agendar a consulta:', error);
+      // Aqui você pode mostrar uma notificação de erro para o usuário (ex: com react-toastify)
+    }
   };
 
   const handleCloseDialogs = () => {
@@ -100,6 +124,31 @@ const ScheduleCreatePagePatient = () => {
       setIsScheduleActionDialogOpen(true);
     }
   };
+
+  if (isBookingSuccess) {
+    return (
+      <Container
+        maxWidth="sm"
+        sx={{
+          display: 'flex',
+          flexDirection: 'column',
+          alignItems: 'center',
+          justifyContent: 'center',
+          textAlign: 'center',
+          height: '80vh',
+        }}
+      >
+        <CheckCircleOutlineIcon color="success" sx={{ fontSize: 80, mb: 2 }} />
+        <Typography variant="h4" component="h1" gutterBottom>
+          Consulta Agendada com Sucesso!
+        </Typography>
+        <Typography variant="body1" color="text.secondary">
+          Você será redirecionado para o seu painel em alguns segundos...
+        </Typography>
+        <CircularProgress sx={{ mt: 4 }} />
+      </Container>
+    );
+  }
 
   return (
     <Container maxWidth="xl" sx={{ my: 4 }}>

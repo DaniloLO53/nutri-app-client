@@ -35,13 +35,14 @@ export const fetchOwnSchedule = createAsyncThunk<
 });
 
 export const fetchNutritionistSchedule = createAsyncThunk<
-  (CalendarSchedule | CalendarNutritionistAppointment | CalendarPatientAppointment)[], // Tipo do retorno em caso de sucesso
+  CalendarNutritionistAppointment[], // Tipo do retorno em caso de sucesso
   { startDate: string; endDate: string; nutritionistId: string }, // Tipo do argumento de entrada
   { rejectValue: string } // Tipo do retorno em caso de falha
 >('schedule/fetch', async ({ startDate, endDate, nutritionistId }, { rejectWithValue }) => {
   try {
     if (!nutritionistId) return [];
     const response = await fetchNutritionistScheduleApi(startDate, endDate, nutritionistId);
+    console.log({ response: response.data });
     return response.data;
   } catch (error) {
     const axiosError = error as AxiosError<{ message: string }>;
@@ -161,9 +162,12 @@ const scheduleSlice = createSlice({
       })
       .addCase(
         fetchNutritionistSchedule.fulfilled,
-        (state, action: PayloadAction<CalendarSchedule[]>) => {
+        (state, action: PayloadAction<CalendarNutritionistAppointment[]>) => {
           state.status = 'succeeded';
-          state.schedules = action.payload;
+          state.schedules = action.payload.map(
+            // eslint-disable-next-line @typescript-eslint/no-unused-vars
+            ({ patient, ...scheduleWithoutPatient }) => scheduleWithoutPatient,
+          );
         },
       )
       .addCase(fetchNutritionistSchedule.rejected, (state, action) => {
@@ -171,15 +175,23 @@ const scheduleSlice = createSlice({
         state.error = action.payload ?? 'Ocorreu um erro desconhecido.';
       })
 
-      // FETCH OWN SCHEDULE
+      // FETCH OWN NUTRITIONIST SCHEDULE
       .addCase(fetchOwnSchedule.pending, (state) => {
         state.status = 'loading';
         state.error = null;
       })
-      .addCase(fetchOwnSchedule.fulfilled, (state, action: PayloadAction<CalendarSchedule[]>) => {
-        state.status = 'succeeded';
-        state.schedules = action.payload;
-      })
+      .addCase(
+        fetchOwnSchedule.fulfilled,
+        (
+          state,
+          action: PayloadAction<
+            (CalendarSchedule | CalendarNutritionistAppointment | CalendarPatientAppointment)[]
+          >,
+        ) => {
+          state.status = 'succeeded';
+          state.schedules = action.payload;
+        },
+      )
       .addCase(fetchOwnSchedule.rejected, (state, action) => {
         state.status = 'failed';
         state.error = action.payload ?? 'Ocorreu um erro desconhecido.';

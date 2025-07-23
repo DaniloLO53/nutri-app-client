@@ -2,7 +2,7 @@ import type { NutritionistAppointment } from '../types/nutritionistsAppointment'
 import type { CalendarPatientAppointment } from '../types/schedule';
 import { apiClient } from './config/axiosConfig';
 
-export const fetchFutureAppointmentsApi = () => {
+export const fetchPatientAppointmentsApi = () => {
   return apiClient.get<CalendarPatientAppointment[]>('/patients/me/appointments');
 };
 
