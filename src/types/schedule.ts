@@ -1,4 +1,5 @@
 import type { AppointmentStatusEnum } from './appointment';
+import type { Location } from './location';
 
 interface PatientOrNutritionist {
   id: string;
@@ -32,6 +33,7 @@ export type EventTypeValue = (typeof EventType)[keyof typeof EventType];
 export interface CalendarSchedule {
   type: EventTypeValue;
   id: string;
+  location?: Location;
   startTime: string; // Formato ISO 8601: "2025-07-21T10:00:00Z"
   durationMinutes: number;
 }
@@ -39,6 +41,7 @@ export interface CalendarSchedule {
 export interface CalendarNutritionistAppointment {
   type: EventTypeValue;
   id: string;
+  location?: Location;
   patient?: PatientOrNutritionist;
   startTime: string; // Formato ISO 8601: "2025-07-21T10:00:00Z"
   durationMinutes: number;

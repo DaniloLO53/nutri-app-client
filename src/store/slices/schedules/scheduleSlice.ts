@@ -5,20 +5,27 @@ import {
   deleteScheduleApi,
   fetchNutritionistScheduleApi,
   fetchOwnNutritionistScheduleApi,
+  deleteCanceledAppointmentApi,
 } from '../../../services/nutritionistService';
-import type { CalendarSchedule, ScheduleState } from '../../../types/schedule';
+import type {
+  CalendarNutritionistAppointment,
+  CalendarPatientAppointment,
+  CalendarSchedule,
+  ScheduleState,
+} from '../../../types/schedule';
 import dayjs from 'dayjs';
 
 /**
  * Thunk para buscar os eventos (consultas e disponibilidades) de uma semana.
  */
 export const fetchOwnSchedule = createAsyncThunk<
-  CalendarSchedule[], // Tipo do retorno em caso de sucesso
+  (CalendarSchedule | CalendarNutritionistAppointment | CalendarPatientAppointment)[], // Tipo do retorno em caso de sucesso
   { startDate: string; endDate: string }, // Tipo do argumento de entrada
   { rejectValue: string } // Tipo do retorno em caso de falha
 >('schedule/me/fetch', async ({ startDate, endDate }, { rejectWithValue }) => {
   try {
     const response = await fetchOwnNutritionistScheduleApi(startDate, endDate);
+    console.log({ response: response.data });
     return response.data;
   } catch (error) {
     const axiosError = error as AxiosError<{ message: string }>;
@@ -28,7 +35,7 @@ export const fetchOwnSchedule = createAsyncThunk<
 });
 
 export const fetchNutritionistSchedule = createAsyncThunk<
-  CalendarSchedule[], // Tipo do retorno em caso de sucesso
+  (CalendarSchedule | CalendarNutritionistAppointment | CalendarPatientAppointment)[], // Tipo do retorno em caso de sucesso
   { startDate: string; endDate: string; nutritionistId: string }, // Tipo do argumento de entrada
   { rejectValue: string } // Tipo do retorno em caso de falha
 >('schedule/fetch', async ({ startDate, endDate, nutritionistId }, { rejectWithValue }) => {
@@ -91,7 +98,7 @@ export const convertFromIsoString = (isoString: string): StartLocalDateTime => {
 
 export const createSchedule = createAsyncThunk<
   CalendarSchedule, // Retorna o novo evento criado em caso de sucesso
-  { startTime: string; durationMinutes: number }, // Argumentos para a criação
+  { startTime: string; durationMinutes: number; locationId: string }, // Argumentos para a criação
   { rejectValue: string }
 >('schedule/create', async (scheduleData, { rejectWithValue }) => {
   try {
@@ -100,7 +107,23 @@ export const createSchedule = createAsyncThunk<
     const response = await createScheduleApi({
       startLocalDateTime,
       durationMinutes: scheduleData.durationMinutes,
+      locationId: scheduleData.locationId,
     });
+
+    return response.data;
+  } catch (error) {
+    const axiosError = error as AxiosError<{ message: string }>;
+    return rejectWithValue(axiosError.response?.data?.message || 'Erro ao criar disponibilidade.');
+  }
+});
+
+export const deleteCanceledAppointment = createAsyncThunk<
+  CalendarSchedule, // Retorna o novo evento criado em caso de sucesso
+  { appointmentId: string }, // Argumentos para a criação
+  { rejectValue: string }
+>('schedule/recreate', async ({ appointmentId }, { rejectWithValue }) => {
+  try {
+    const response = await deleteCanceledAppointmentApi({ appointmentId });
 
     return response.data;
   } catch (error) {
@@ -140,7 +163,6 @@ const scheduleSlice = createSlice({
         fetchNutritionistSchedule.fulfilled,
         (state, action: PayloadAction<CalendarSchedule[]>) => {
           state.status = 'succeeded';
-          console.log('PAYLOAD FROM FETCH SCHEDULE', action.payload);
           state.schedules = action.payload;
         },
       )
@@ -156,7 +178,6 @@ const scheduleSlice = createSlice({
       })
       .addCase(fetchOwnSchedule.fulfilled, (state, action: PayloadAction<CalendarSchedule[]>) => {
         state.status = 'succeeded';
-        console.log('PAYLOAD FROM FETCH SCHEDULE', action.payload);
         state.schedules = action.payload;
       })
       .addCase(fetchOwnSchedule.rejected, (state, action) => {
@@ -171,6 +192,21 @@ const scheduleSlice = createSlice({
         state.schedules.push(action.payload);
       })
       .addCase(createSchedule.rejected, (state, action) => {
+        // Apenas armazena o erro. Um toast de erro pode ser exibido na UI.
+        state.error = action.payload ?? 'Falha ao criar horário.';
+        state.status = 'failed';
+      })
+
+      // RECREATE SCHEDULE
+      .addCase(
+        deleteCanceledAppointment.fulfilled,
+        (state, action: PayloadAction<CalendarSchedule>) => {
+          // Adiciona o novo evento à lista existente para feedback imediato
+          state.status = 'succeeded';
+          state.schedules.push(action.payload);
+        },
+      )
+      .addCase(deleteCanceledAppointment.rejected, (state, action) => {
         // Apenas armazena o erro. Um toast de erro pode ser exibido na UI.
         state.error = action.payload ?? 'Falha ao criar horário.';
         state.status = 'failed';

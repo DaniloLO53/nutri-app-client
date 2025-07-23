@@ -12,6 +12,7 @@ export interface NutritionistAppointment {
   patient: AppointmentPatient;
   startTime: string; // Formato ISO 8601
   durationMinutes: number;
+  address: string;
   type: EventTypeValue;
   status: AppointmentStatusValue;
 }

@@ -85,6 +85,7 @@ const AppointmentsNutritionistPage = () => {
             <TableRow>
               <TableCell>Paciente</TableCell>
               <TableCell>Data e Hora</TableCell>
+              <TableCell>Local</TableCell>
               <TableCell>Status</TableCell>
             </TableRow>
           </TableHead>
@@ -93,6 +94,7 @@ const AppointmentsNutritionistPage = () => {
               <TableRow key={appt.id}>
                 <TableCell>{appt.patient.name}</TableCell>
                 <TableCell>{dayjs(appt.startTime).format('DD/MM/YYYY [às] HH:mm')}</TableCell>
+                <TableCell>{appt.address}</TableCell>
                 <TableCell>
                   <Chip label={appt.status} color={getStatusChipColor(appt.status)} size="small" />
                 </TableCell>

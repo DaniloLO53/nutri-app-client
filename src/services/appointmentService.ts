@@ -10,8 +10,8 @@ export const fetchNutritionistAppointmentsApi = () => {
   return apiClient.get<NutritionistAppointment[]>('/nutritionists/me/appointments');
 };
 
-export const deleteAppointmentApi = (appointmentId: string) => {
-  return apiClient.delete(`/nutritionists/me/appointments/${appointmentId}`);
+export const cancelAppointmentApi = (appointmentId: string) => {
+  return apiClient.post(`/nutritionists/me/appointments/${appointmentId}`);
 };
 
 export interface CreateAppointmentPayload {
@@ -21,6 +21,5 @@ export interface CreateAppointmentPayload {
 
 // Função para criar uma consulta preenchendo uma disponibilidade existente
 export const createAppointmentApi = (scheduleId: string, payload: CreateAppointmentPayload) => {
-  console.log(scheduleId);
   return apiClient.post(`/appointments/schedules/${scheduleId}`, payload);
 };

@@ -3,7 +3,7 @@ import { AxiosError } from 'axios';
 import type { AppointmentState } from '../../../types/appointment';
 import {
   createAppointmentApi,
-  deleteAppointmentApi,
+  cancelAppointmentApi,
   fetchFutureAppointmentsApi,
 } from '../../../services/appointmentService';
 import type { CalendarNutritionistAppointment } from '../../../types/schedule';
@@ -37,15 +37,15 @@ export const createAppointmentForPatient = createAsyncThunk<
   }
 });
 
-export const deleteAppointment = createAsyncThunk<
+export const cancelAppointment = createAsyncThunk<
   void,
   { appointmentId: string; startDate: string; endDate: string },
   { rejectValue: string }
 >(
-  'schedule/deleteAppointment',
+  'schedule/cancelAppointment',
   async ({ startDate, endDate, appointmentId }, { rejectWithValue, dispatch }) => {
     try {
-      await deleteAppointmentApi(appointmentId);
+      await cancelAppointmentApi(appointmentId);
       dispatch(fetchOwnSchedule({ startDate, endDate }));
     } catch (error) {
       const axiosError = error as AxiosError<{ message: string }>;
@@ -105,11 +105,11 @@ const appointmentSlice = createSlice({
       })
 
       // DELETE APPOINTMENT
-      .addCase(deleteAppointment.fulfilled, (state) => {
+      .addCase(cancelAppointment.fulfilled, (state) => {
         // state.appointments = state.appointments.filter(({ id }) => id !== action.payload);
         state.status = 'succeeded';
       })
-      .addCase(deleteAppointment.rejected, (state, action) => {
+      .addCase(cancelAppointment.rejected, (state, action) => {
         state.error = action.payload ?? 'Falha ao deletar consulta.';
         state.status = 'failed';
       })

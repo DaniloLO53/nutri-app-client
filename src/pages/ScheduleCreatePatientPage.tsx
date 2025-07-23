@@ -70,7 +70,6 @@ const ScheduleCreatePagePatient = () => {
   }, [dispatch, startOfWeek, endOfWeek, nutritionistId, appointments.length]);
 
   const handleConfirmAppointment = () => {
-    console.log({ selectedSchedule });
     if (!selectedSchedule || !userInfo?.id) {
       console.error('Horário ou ID do paciente não encontrado!');
       return;

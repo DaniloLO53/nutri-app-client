@@ -28,6 +28,7 @@ import {
   createSchedule,
   deleteSchedule,
   fetchOwnSchedule,
+  deleteCanceledAppointment,
 } from '../store/slices/schedules/scheduleSlice';
 import CalendarGrid from '../components/CalendarGrid';
 import AppointmentCreateNutritionist from '../components/AppointmentCreateNutritionist';
@@ -36,17 +37,19 @@ import {
   type CalendarNutritionistAppointment,
   type CalendarSchedule,
 } from '../types/schedule';
-import { deleteAppointment } from '../store/slices/appointments/appointmentSlice';
+import { cancelAppointment } from '../store/slices/appointments/appointmentSlice';
+import { fetchLocations } from '../store/slices/locations/locationSlice';
+import { orange } from '@mui/material/colors';
+import { AppointmentStatus } from '../types/appointment';
 
 const DURATIONS = [15, 30, 45, 60];
 
-const ScheduleCreatePage = () => {
+const ScheduleCreateNutritionistPage = () => {
   const dispatch = useDispatch<AppDispatch>();
 
   const { schedules, status: scheduleStatus } = useSelector((state: RootState) => state.schedule);
-  // const { appointments, status: appointmentStatus } = useSelector(
-  //   (state: RootState) => state.appointments,
-  // );
+  const { locations, status: locationsStatus } = useSelector((state: RootState) => state.locations);
+  const [selectedLocationId, setSelectedLocationId] = useState<string>('');
 
   const [currentDate, setCurrentDate] = useState(dayjs());
   const [slotDuration, setSlotDuration] = useState(30);
@@ -57,13 +60,25 @@ const ScheduleCreatePage = () => {
 
   const [isCreateDialogOpen, setIsCreateDialogOpen] = useState(false);
   const [isScheduleActionDialogOpen, setIsScheduleActionDialogOpen] = useState(false);
+  const [isDeleteCanceledAppointmentDialogOpen, setIsDeleteCanceledAppointmentDialogOpen] =
+    useState(false);
+
   const [isAppointmentCreateOpen, setIsAppointmentCreateOpen] = useState(false);
 
-  const [selectedSchedule, setSelectedSchedule] = useState<CalendarSchedule | null>(null); // NOVO: Estado para o evento selecionado
+  const [selectedSchedule, setSelectedSchedule] = useState<CalendarSchedule | null>(null);
   const [selectedSlot, setSelectedSlot] = useState<Dayjs | null>(null);
 
   const startOfWeek = useMemo(() => currentDate.startOf('week'), [currentDate]);
   const endOfWeek = useMemo(() => currentDate.endOf('week'), [currentDate]);
+
+  const legendItems = [
+    { label: 'Disponível', color: 'primary.light' },
+    { label: 'Agendado', color: 'warning.light' },
+    { label: 'Confirmado', color: 'success.light' },
+    { label: 'Concluído', color: 'grey.400' },
+    { label: 'Cancelado', color: 'error.light' },
+    { label: 'Não Compareceu', color: orange[300] },
+  ];
 
   useEffect(() => {
     dispatch(
@@ -75,37 +90,48 @@ const ScheduleCreatePage = () => {
   }, [dispatch, startOfWeek, endOfWeek]);
 
   const handleSlotClick = (slotDate: Dayjs) => {
-    setSelectedSlot(slotDate); // Salva o slot clicado
-    setIsCreateDialogOpen(true); // Abre o diálogo
+    setSelectedSlot(slotDate);
+    setIsCreateDialogOpen(true);
+    setSelectedLocationId('');
   };
+
+  useEffect(() => {
+    dispatch(fetchLocations());
+  }, [dispatch]);
 
   const handleCloseDialogs = () => {
     setIsCreateDialogOpen(false);
     setIsScheduleActionDialogOpen(false);
     setIsAppointmentCreateOpen(false);
-    setIsAppointmentActionDialogOpen(false); // <-- NOVO
+    setIsAppointmentActionDialogOpen(false);
+    setIsDeleteCanceledAppointmentDialogOpen(false);
+    setSelectedLocationId('');
     setSelectedSlot(null);
     setSelectedSchedule(null);
-    setSelectedAppointment(null); // <-- NOVO
+    setSelectedAppointment(null);
   };
 
   const handleEventClick = (event: CalendarSchedule | CalendarNutritionistAppointment) => {
     if (event.type === EventType.SCHEDULE) {
-      // Lógica antiga para horários disponíveis
       setSelectedSchedule(event as CalendarSchedule);
       setIsScheduleActionDialogOpen(true);
     } else if (event.type === EventType.APPOINTMENT) {
-      // Lógica nova para consultas marcadas
-      setSelectedAppointment(event as CalendarNutritionistAppointment);
-      setIsAppointmentActionDialogOpen(true);
+      const appointment = event as CalendarNutritionistAppointment;
+      setSelectedAppointment(appointment); // Salva o appointment selecionado em ambos os casos
+
+      if (appointment.status === AppointmentStatus.CANCELADO) {
+        setIsDeleteCanceledAppointmentDialogOpen(true);
+      } else {
+        setIsAppointmentActionDialogOpen(true);
+      }
     }
   };
 
-  const handleConfirmAppointmentDelete = () => {
+  const handleConfirmCancelAppointment = () => {
     if (!selectedAppointment) return;
 
     dispatch(
-      deleteAppointment({
+      cancelAppointment({
         appointmentId: selectedAppointment.id,
         startDate: startOfWeek.format('YYYY-MM-DD'),
         endDate: endOfWeek.format('YYYY-MM-DD'),
@@ -114,7 +140,7 @@ const ScheduleCreatePage = () => {
     handleCloseDialogs();
   };
 
-  const handleConfirmDelete = () => {
+  const handleConfirmDeleteSchedule = () => {
     if (!selectedSchedule) return;
 
     dispatch(deleteSchedule(selectedSchedule.id));
@@ -122,12 +148,28 @@ const ScheduleCreatePage = () => {
   };
 
   const handleCreateSchedule = () => {
-    if (!selectedSlot) return;
+    if (!selectedSlot || !selectedLocationId) return;
 
     dispatch(
       createSchedule({
         startTime: selectedSlot.toISOString(),
         durationMinutes: slotDuration,
+        locationId: selectedLocationId,
+      }),
+    );
+    handleCloseDialogs();
+  };
+
+  const handleConfirmPermanentDeleteAppointment = () => {
+    if (!selectedAppointment?.location?.id) {
+      console.error('A consulta cancelada não possui ID de local para recriar o horário.');
+      handleCloseDialogs();
+      return;
+    }
+
+    dispatch(
+      deleteCanceledAppointment({
+        appointmentId: selectedAppointment.id,
       }),
     );
     handleCloseDialogs();
@@ -191,7 +233,32 @@ const ScheduleCreatePage = () => {
           </Select>
         </FormControl>
       </Box>
-
+      <Box
+        sx={{
+          display: 'flex',
+          flexWrap: 'wrap',
+          justifyContent: 'center',
+          gap: 3,
+          my: 2,
+        }}
+      >
+        {legendItems.map((item) => (
+          <Box key={item.label} sx={{ display: 'flex', alignItems: 'center' }}>
+            <Box
+              component="span"
+              sx={{
+                width: 18,
+                height: 18,
+                backgroundColor: item.color,
+                mr: 1,
+                borderRadius: '4px',
+                border: '1px solid rgba(0,0,0,0.2)',
+              }}
+            />
+            <Typography variant="body2">{item.label}</Typography>
+          </Box>
+        ))}
+      </Box>
       {scheduleStatus === 'loading' ? (
         <Box sx={{ display: 'flex', justifyContent: 'center' }}>
           <CircularProgress />
@@ -205,7 +272,6 @@ const ScheduleCreatePage = () => {
           onEventClick={handleEventClick}
         />
       )}
-
       <Dialog
         open={isCreateDialogOpen}
         onClose={handleCloseDialogs}
@@ -217,17 +283,42 @@ const ScheduleCreatePage = () => {
             Você selecionou o horário de {selectedSlot?.format('HH:mm')} do dia{' '}
             {selectedSlot?.format('DD/MM/YYYY')}.
           </DialogContentText>
+          <DialogContentText>Escolha o local para a disponibilidade.</DialogContentText>
+
+          <FormControl fullWidth sx={{ mt: 2 }}>
+            <InputLabel id="location-select-label">Local de Atendimento</InputLabel>
+            <Select
+              labelId="location-select-label"
+              label="Local de Atendimento"
+              value={selectedLocationId}
+              onChange={(e) => setSelectedLocationId(e.target.value as string)}
+            >
+              {locationsStatus === 'loading' ? (
+                <MenuItem disabled>Carregando locais...</MenuItem>
+              ) : (
+                locations.map((location) => (
+                  <MenuItem key={location.id} value={location.id}>
+                    {location.address}
+                  </MenuItem>
+                ))
+              )}
+            </Select>
+          </FormControl>
         </DialogContent>
         <DialogActions sx={{ p: 2 }}>
           <Button onClick={handleCloseDialogs} color="secondary">
             Cancelar
           </Button>
-          <Button onClick={handleCreateSchedule} variant="contained" autoFocus>
+          <Button
+            onClick={handleCreateSchedule}
+            variant="contained"
+            autoFocus
+            disabled={!selectedLocationId}
+          >
             Criar Disponibilidade
           </Button>
         </DialogActions>
       </Dialog>
-
       <Dialog open={isScheduleActionDialogOpen} onClose={handleCloseDialogs}>
         <DialogTitle>Ação para Horário Disponível</DialogTitle>
         <DialogContent>
@@ -238,7 +329,7 @@ const ScheduleCreatePage = () => {
           </DialogContentText>
         </DialogContent>
         <DialogActions sx={{ p: 2, justifyContent: 'space-between' }}>
-          <Button onClick={handleConfirmDelete} color="error">
+          <Button onClick={handleConfirmDeleteSchedule} color="error">
             Excluir Horário
           </Button>
           <Box>
@@ -251,28 +342,48 @@ const ScheduleCreatePage = () => {
           </Box>
         </DialogActions>
       </Dialog>
-
+      // Dentro do return de ScheduleCreateNutritionistPage.tsx
+      {/* Diálogo para consultas AGENDADAS, CONFIRMADAS, etc. */}
       <Dialog open={isAppointmentActionDialogOpen} onClose={handleCloseDialogs}>
-        <DialogTitle>Ação para Consulta Marcada</DialogTitle>
+        <DialogTitle>Cancelar Consulta</DialogTitle>
         <DialogContent>
           <DialogContentText>
-            Você selecionou a consulta com o paciente{' '}
-            <strong>{selectedAppointment?.patient?.name}</strong>, marcada para as{' '}
-            <strong>{dayjs(selectedAppointment?.startTime).format('HH:mm')}</strong> do dia{' '}
-            <strong>{dayjs(selectedAppointment?.startTime).format('DD/MM/YYYY')}</strong>. Deseja
-            excluir esta consulta?
+            Você tem certeza que deseja <strong>cancelar</strong> a consulta com o paciente{' '}
+            <strong>{selectedAppointment?.patient?.name}</strong>? Esta ação não poderá ser
+            desfeita.
           </DialogContentText>
         </DialogContent>
         <DialogActions sx={{ p: 2 }}>
           <Button onClick={handleCloseDialogs} color="secondary">
-            Cancelar
+            Manter Consulta
           </Button>
-          <Button onClick={handleConfirmAppointmentDelete} variant="contained" color="error">
-            Excluir Consulta
+          {/* ✅ BOTÃO E FUNÇÃO MODIFICADOS */}
+          <Button onClick={handleConfirmCancelAppointment} variant="contained" color="error">
+            Sim, Cancelar Consulta
           </Button>
         </DialogActions>
       </Dialog>
-
+      <Dialog open={isDeleteCanceledAppointmentDialogOpen} onClose={handleCloseDialogs}>
+        {/* ✅ TÍTULO MODIFICADO */}
+        <DialogTitle>Ações para Consulta Cancelada</DialogTitle>
+        <DialogContent>
+          {/* ✅ TEXTO MODIFICADO */}
+          <DialogContentText>
+            Esta consulta já está cancelada. O que você deseja fazer?
+          </DialogContentText>
+        </DialogContent>
+        <DialogActions sx={{ p: 2, display: 'flex', justifyContent: 'space-between' }}>
+          {/* ✅ BOTÃO DE EXCLUSÃO PERMANENTE */}
+          <Button onClick={handleConfirmPermanentDeleteAppointment} color="error">
+            Excluir Registro
+          </Button>
+          <Box>
+            <Button onClick={handleCloseDialogs} color="secondary">
+              Nada, manter registro
+            </Button>
+          </Box>
+        </DialogActions>
+      </Dialog>
       <AppointmentCreateNutritionist
         open={isAppointmentCreateOpen}
         onClose={handleCloseDialogs}
@@ -284,4 +395,4 @@ const ScheduleCreatePage = () => {
   );
 };
 
-export default ScheduleCreatePage;
+export default ScheduleCreateNutritionistPage;

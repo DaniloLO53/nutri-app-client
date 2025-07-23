@@ -30,8 +30,15 @@ export const fetchNutritionistScheduleApi = (
 export const createScheduleApi = (data: {
   startLocalDateTime: StartLocalDateTime;
   durationMinutes: number;
+  locationId: string;
 }) => {
-  return apiClient.post<CalendarSchedule>('/nutritionists/me/schedules', data);
+  const { locationId } = data;
+  return apiClient.post<CalendarSchedule>(`/nutritionists/me/schedules/${locationId}`, data);
+};
+
+export const deleteCanceledAppointmentApi = (data: { appointmentId: string }) => {
+  const { appointmentId } = data;
+  return apiClient.delete<CalendarSchedule>(`/nutritionists/me/appointments/${appointmentId}`);
 };
 
 export const deleteScheduleApi = (scheduleId: string) => {

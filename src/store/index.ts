@@ -7,6 +7,7 @@ import nutritionistProfileReducer from './slices/nutritionistProfiles/nutritioni
 import nutritionistAppointmentReducer from './slices/appointments/nutritionistAppointmentSlice';
 import scheduleReducer from './slices/schedules/scheduleSlice';
 import patientSearchReducer from './slices/patients/patientSearchSlice';
+import locationsReducer from './slices/locations/locationSlice';
 
 export const store = configureStore({
   reducer: {
@@ -20,6 +21,7 @@ export const store = configureStore({
     nutritionistAppointments: nutritionistAppointmentReducer,
     schedule: scheduleReducer,
     patientSearch: patientSearchReducer,
+    locations: locationsReducer,
   },
 });
 
