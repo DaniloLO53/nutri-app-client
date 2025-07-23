@@ -19,7 +19,9 @@ import {
   DialogContentText,
   DialogTitle,
   DialogActions,
+  IconButton,
 } from '@mui/material';
+import CloseIcon from '@mui/icons-material/Close';
 import ArrowBackIosNewIcon from '@mui/icons-material/ArrowBackIosNew';
 import ArrowForwardIosIcon from '@mui/icons-material/ArrowForwardIos';
 
@@ -55,6 +57,7 @@ const ScheduleCreateNutritionistPage = () => {
   const [slotDuration, setSlotDuration] = useState(30);
 
   const [isAppointmentActionDialogOpen, setIsAppointmentActionDialogOpen] = useState(false);
+  const [isAppointmentDetailOpen, setIsAppointmentDetailOpen] = useState(false);
   const [selectedAppointment, setSelectedAppointment] =
     useState<CalendarNutritionistAppointment | null>(null);
 
@@ -105,10 +108,16 @@ const ScheduleCreateNutritionistPage = () => {
     setIsAppointmentCreateOpen(false);
     setIsAppointmentActionDialogOpen(false);
     setIsDeleteCanceledAppointmentDialogOpen(false);
+    setIsAppointmentDetailOpen(false);
     setSelectedLocationId('');
     setSelectedSlot(null);
     setSelectedSchedule(null);
     setSelectedAppointment(null);
+  };
+
+  const handleViewAppointmentDetails = () => {
+    setIsAppointmentActionDialogOpen(false); // Fecha o modal de ação
+    setIsAppointmentDetailOpen(true); // Abre o modal de detalhes
   };
 
   const handleEventClick = (event: CalendarSchedule | CalendarNutritionistAppointment) => {
@@ -117,12 +126,21 @@ const ScheduleCreateNutritionistPage = () => {
       setIsScheduleActionDialogOpen(true);
     } else if (event.type === EventType.APPOINTMENT) {
       const appointment = event as CalendarNutritionistAppointment;
-      setSelectedAppointment(appointment); // Salva o appointment selecionado em ambos os casos
+      setSelectedAppointment(appointment);
 
-      if (appointment.status === AppointmentStatus.CANCELADO) {
+      // Lógica condicional baseada no status
+      if (
+        appointment.status === AppointmentStatus.AGENDADO ||
+        appointment.status === AppointmentStatus.CONFIRMADO
+      ) {
+        // Abre o diálogo de ações para consultas ativas
+        setIsAppointmentActionDialogOpen(true);
+      } else if (appointment.status === AppointmentStatus.CANCELADO) {
+        // Abre o diálogo de recriar/excluir para consultas canceladas
         setIsDeleteCanceledAppointmentDialogOpen(true);
       } else {
-        setIsAppointmentActionDialogOpen(true);
+        // Para outros status (CONCLUIDO, etc.), abre os detalhes diretamente
+        setIsAppointmentDetailOpen(true);
       }
     }
   };
@@ -342,38 +360,107 @@ const ScheduleCreateNutritionistPage = () => {
           </Box>
         </DialogActions>
       </Dialog>
-      // Dentro do return de ScheduleCreateNutritionistPage.tsx
-      {/* Diálogo para consultas AGENDADAS, CONFIRMADAS, etc. */}
       <Dialog open={isAppointmentActionDialogOpen} onClose={handleCloseDialogs}>
-        <DialogTitle>Cancelar Consulta</DialogTitle>
+        <DialogTitle>Ações para Consulta</DialogTitle>
         <DialogContent>
           <DialogContentText>
-            Você tem certeza que deseja <strong>cancelar</strong> a consulta com o paciente{' '}
-            <strong>{selectedAppointment?.patient?.name}</strong>? Esta ação não poderá ser
-            desfeita.
+            O que deseja fazer com a consulta do paciente{' '}
+            <strong>{selectedAppointment?.patient?.name}</strong>?
           </DialogContentText>
         </DialogContent>
-        <DialogActions sx={{ p: 2 }}>
-          <Button onClick={handleCloseDialogs} color="secondary">
-            Manter Consulta
+        <DialogActions sx={{ p: 2, justifyContent: 'space-between' }}>
+          {/* ✅ NOVO BOTÃO DE VER INFORMAÇÕES */}
+          <Button onClick={handleViewAppointmentDetails} variant="outlined">
+            Ver Informações
           </Button>
-          {/* ✅ BOTÃO E FUNÇÃO MODIFICADOS */}
-          <Button onClick={handleConfirmCancelAppointment} variant="contained" color="error">
-            Sim, Cancelar Consulta
-          </Button>
+          <Box>
+            <Button onClick={handleCloseDialogs} color="secondary">
+              Manter Consulta
+            </Button>
+            <Button onClick={handleConfirmCancelAppointment} variant="contained" color="error">
+              Cancelar Consulta
+            </Button>
+          </Box>
+        </DialogActions>
+      </Dialog>
+      // Dentro do return de ScheduleCreateNutritionistPage.tsx
+      {/* ✅ NOVO DIÁLOGO DE DETALHES DA CONSULTA */}
+      <Dialog open={isAppointmentDetailOpen} onClose={handleCloseDialogs} fullWidth maxWidth="xs">
+        <DialogTitle
+          sx={{
+            display: 'flex',
+            justifyContent: 'space-between',
+            alignItems: 'center',
+          }}
+        >
+          Detalhes da Consulta
+          <IconButton onClick={handleCloseDialogs} sx={{ p: 0 }}>
+            <CloseIcon />
+          </IconButton>
+        </DialogTitle>
+        <DialogContent dividers>
+          {selectedAppointment && ( // Garante que há uma consulta selecionada
+            <Box sx={{ display: 'flex', flexDirection: 'column', gap: 2 }}>
+              <Box>
+                <Typography variant="caption" color="text.secondary">
+                  Paciente
+                </Typography>
+                <Typography variant="body1">{selectedAppointment.patient?.name}</Typography>
+              </Box>
+              <Box>
+                <Typography variant="caption" color="text.secondary">
+                  Local de Atendimento
+                </Typography>
+                <Typography variant="body1">{selectedAppointment.location?.address}</Typography>
+              </Box>
+              <Box>
+                <Typography variant="caption" color="text.secondary">
+                  Data e Horário
+                </Typography>
+                <Typography variant="body1">
+                  {`${dayjs(selectedAppointment.startTime).format('dddd, D [de] MMMM [de] YYYY')}`}
+                  <br />
+                  {'Das '}
+                  <strong>{dayjs(selectedAppointment.startTime).format('HH:mm')}</strong>
+                  {' às '}
+                  <strong>
+                    {dayjs(selectedAppointment.startTime)
+                      .add(selectedAppointment.durationMinutes, 'minute')
+                      .format('HH:mm')}
+                  </strong>
+                </Typography>
+              </Box>
+              <Box>
+                <Typography variant="caption" color="text.secondary">
+                  Modalidade
+                </Typography>
+                <Typography variant="body1">
+                  {selectedAppointment.isRemote ? 'Teleconsulta' : 'Presencial'}
+                </Typography>
+              </Box>
+              <Box>
+                <Typography variant="caption" color="text.secondary">
+                  Status
+                </Typography>
+                <Typography variant="body1" sx={{ fontWeight: 'bold' }}>
+                  {selectedAppointment.status}
+                </Typography>
+              </Box>
+            </Box>
+          )}
+        </DialogContent>
+        <DialogActions>
+          <Button onClick={handleCloseDialogs}>Fechar</Button>
         </DialogActions>
       </Dialog>
       <Dialog open={isDeleteCanceledAppointmentDialogOpen} onClose={handleCloseDialogs}>
-        {/* ✅ TÍTULO MODIFICADO */}
         <DialogTitle>Ações para Consulta Cancelada</DialogTitle>
         <DialogContent>
-          {/* ✅ TEXTO MODIFICADO */}
           <DialogContentText>
             Esta consulta já está cancelada. O que você deseja fazer?
           </DialogContentText>
         </DialogContent>
         <DialogActions sx={{ p: 2, display: 'flex', justifyContent: 'space-between' }}>
-          {/* ✅ BOTÃO DE EXCLUSÃO PERMANENTE */}
           <Button onClick={handleConfirmPermanentDeleteAppointment} color="error">
             Excluir Registro
           </Button>
