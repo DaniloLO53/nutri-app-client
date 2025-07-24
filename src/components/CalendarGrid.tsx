@@ -93,13 +93,14 @@ const CalendarGrid = ({
     };
   };
 
+  // Em CalendarGrid.tsx
+
   return (
     <Paper sx={{ overflow: 'auto' }}>
       <Box
         sx={{
           display: 'grid',
           gridTemplateColumns: 'auto repeat(7, 1fr)',
-          // A altura das linhas é fixa, mas o número de linhas agora é dinâmico
           gridTemplateRows: `auto repeat(${timeSlots.length}, 40px)`,
           minWidth: '800px',
         }}
@@ -107,37 +108,26 @@ const CalendarGrid = ({
         {/* Canto Vazio */}
         <Box sx={{ gridColumn: 1, gridRow: 1 }} />
 
-        {/* Cabeçalho dos Dias */}
-        {days.map((day, dayIndex) =>
-          timeSlots.map((time, timeIndex) => {
-            const slotStart = day.hour(time.hour()).minute(time.minute());
-            const slotEnd = slotStart.add(slotDuration, 'minute');
+        {days.map((day, i) => (
+          <Box
+            key={i}
+            sx={{
+              gridColumn: i + 2,
+              gridRow: 1,
+              textAlign: 'center',
+              p: 1,
+              borderBottom: '1px solid #ddd',
+              position: 'sticky', // Garante que o cabeçalho fique visível ao rolar
+              top: 0,
+              backgroundColor: 'background.paper',
+              zIndex: 3,
+            }}
+          >
+            <Typography variant="subtitle2">{day.format('ddd').toUpperCase()}</Typography>
+            <Typography variant="h6">{day.format('D')}</Typography>
+          </Box>
+        ))}
 
-            // Verifica se a hora atual está dentro do intervalo deste slot
-            const isCurrentSlot = now.isAfter(slotStart) && now.isBefore(slotEnd);
-
-            return (
-              <Box
-                key={`${dayIndex}-${timeIndex}`}
-                sx={{
-                  gridColumn: dayIndex + 2,
-                  gridRow: timeIndex + 2,
-                  borderBottom: '1px solid #eee',
-                  borderRight: '1px solid #eee',
-                  cursor: 'pointer',
-                  '&:hover': { backgroundColor: 'action.hover' },
-                  // ✅ APLICA O ESTILO CONDICIONAL AQUI
-                  backgroundColor: isCurrentSlot
-                    ? alpha('#ffc107', 0.2) // Uma cor de destaque sutil (amarelo)
-                    : undefined,
-                }}
-                onClick={() => (onSlotClick ? onSlotClick(slotStart) : null)} // Reutiliza a variável `slotStart`
-              />
-            );
-          }),
-        )}
-
-        {/* Coluna de Horários */}
         {timeSlots.map((time, i) => (
           <Box
             key={i}
@@ -147,8 +137,10 @@ const CalendarGrid = ({
               textAlign: 'right',
               pr: 1,
               borderRight: '1px solid #ddd',
-              fontSize: '12px',
-              color: 'text.secondary',
+              position: 'sticky', // Garante que os horários fiquem visíveis ao rolar
+              left: 0,
+              backgroundColor: 'background.paper',
+              zIndex: 3,
             }}
           >
             <Typography
@@ -165,49 +157,58 @@ const CalendarGrid = ({
           </Box>
         ))}
 
-        {/* Slots Clicáveis */}
         {days.map((day, dayIndex) =>
-          timeSlots.map((time, timeIndex) => (
-            <Box
-              key={`${dayIndex}-${timeIndex}`}
-              sx={{
-                gridColumn: dayIndex + 2,
-                gridRow: timeIndex + 2,
-                borderBottom: '1px solid #eee',
-                borderRight: '1px solid #eee',
-                cursor: 'pointer',
-                '&:hover': { backgroundColor: 'action.hover' },
-              }}
-              onClick={() =>
-                onSlotClick ? onSlotClick(day.hour(time.hour()).minute(time.minute())) : null
-              }
-            />
-          )),
+          timeSlots.map((time, timeIndex) => {
+            const slotStart = day.hour(time.hour()).minute(time.minute());
+            const slotEnd = slotStart.add(slotDuration, 'minute');
+            const isCurrentSlot = now.isAfter(slotStart) && now.isBefore(slotEnd);
+
+            return (
+              <Box
+                key={`${dayIndex}-${timeIndex}`}
+                sx={{
+                  gridColumn: dayIndex + 2,
+                  gridRow: timeIndex + 2,
+                  borderBottom: '1px solid #eee',
+                  borderRight: '1px solid #eee',
+                  cursor: onSlotClick ? 'pointer' : 'default', // Cursor só se a função for passada
+                  '&:hover': {
+                    backgroundColor: onSlotClick ? 'action.hover' : undefined,
+                  },
+                  backgroundColor: isCurrentSlot ? alpha('#ffc107', 0.2) : undefined,
+                }}
+                onClick={() => (onSlotClick ? onSlotClick(slotStart) : null)}
+              />
+            );
+          }),
         )}
 
-        {/* Eventos Existentes */}
+        {/* Eventos Existentes (CORRETO) */}
         {events.map((event, index) => {
+          const isAppointment = event.type === EventType.APPOINTMENT;
+          const isClickable = onEventClick !== undefined; // Exemplo simples, pode ser mais complexo
+
           return (
             <Box
               key={event.id + index}
               sx={{
                 ...getEventStyle(event),
-                // Cursor de ponteiro para todos os eventos
-                cursor: 'pointer',
+                cursor: isClickable ? 'pointer' : 'default',
                 '&:hover': {
-                  filter: 'brightness(0.9)',
+                  filter: isClickable ? 'brightness(0.9)' : 'none',
                 },
                 position: 'relative',
-                zIndex: 2, // garante que os eventos sejam clicaveis
+                zIndex: 2,
               }}
-              // O onClick agora funciona para qualquer evento
               onClick={(e) => {
+                if (!isClickable) return;
                 e.stopPropagation();
                 onEventClick(event);
               }}
             >
-              {event.type === EventType.APPOINTMENT
-                ? (event as CalendarNutritionistAppointment).patient?.name
+              {isAppointment
+                ? (event as CalendarNutritionistAppointment).patient?.name ||
+                  (event as CalendarPatientAppointment).nutritionist?.name
                 : 'Disponível'}
             </Box>
           );

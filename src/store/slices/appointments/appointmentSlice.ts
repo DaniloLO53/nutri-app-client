@@ -3,8 +3,9 @@ import { AxiosError } from 'axios';
 import type { AppointmentState } from '../../../types/appointment';
 import {
   createAppointmentApi,
-  cancelAppointmentApi,
   fetchPatientAppointmentsApi,
+  cancelAppointmentByNutritionistApi,
+  cancelAppointmentByPatientApi,
 } from '../../../services/appointmentService';
 import type { CalendarNutritionistAppointment } from '../../../types/schedule';
 import { fetchOwnSchedule } from '../schedules/scheduleSlice';
@@ -39,14 +40,19 @@ export const createAppointmentForPatient = createAsyncThunk<
 
 export const cancelAppointment = createAsyncThunk<
   void,
-  { appointmentId: string; startDate: string; endDate: string },
+  { appointmentId: string; startDate?: string; endDate?: string },
   { rejectValue: string }
 >(
   'schedule/cancelAppointment',
   async ({ startDate, endDate, appointmentId }, { rejectWithValue, dispatch }) => {
     try {
-      await cancelAppointmentApi(appointmentId);
-      dispatch(fetchOwnSchedule({ startDate, endDate }));
+      if (startDate && endDate) {
+        await cancelAppointmentByNutritionistApi(appointmentId);
+        dispatch(fetchOwnSchedule({ startDate, endDate }));
+      } else {
+        await cancelAppointmentByPatientApi(appointmentId);
+        dispatch(fetchFutureAppointments());
+      }
     } catch (error) {
       const axiosError = error as AxiosError<{ message: string }>;
       return rejectWithValue(axiosError.response?.data?.message || 'Erro ao buscar a agenda.');
@@ -62,6 +68,7 @@ export const fetchFutureAppointments = createAsyncThunk<
 >('appointments/fetchAll', async (_, { rejectWithValue }) => {
   try {
     const response = await fetchPatientAppointmentsApi();
+    console.log({ response: response.data });
     return response.data;
   } catch (error) {
     const axiosError = error as AxiosError<{ message: string }>;
