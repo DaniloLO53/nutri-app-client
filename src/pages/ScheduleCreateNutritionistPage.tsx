@@ -383,8 +383,6 @@ const ScheduleCreateNutritionistPage = () => {
           </Box>
         </DialogActions>
       </Dialog>
-      // Dentro do return de ScheduleCreateNutritionistPage.tsx
-      {/* ✅ NOVO DIÁLOGO DE DETALHES DA CONSULTA */}
       <Dialog open={isAppointmentDetailOpen} onClose={handleCloseDialogs} fullWidth maxWidth="xs">
         <DialogTitle
           sx={{

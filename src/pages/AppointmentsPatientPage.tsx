@@ -1,4 +1,4 @@
-import { useEffect } from 'react';
+import { useEffect, useState } from 'react';
 import { useDispatch, useSelector } from 'react-redux';
 
 import {
@@ -16,12 +16,21 @@ import {
   TableRow,
   Chip,
   Fab,
+  Button,
+  Dialog,
+  DialogTitle,
+  DialogContent,
+  DialogActions,
+  DialogContentText,
 } from '@mui/material';
 
 import dayjs from 'dayjs';
 import { AppointmentStatus, type AppointmentStatusEnum } from '../types/appointment';
 import type { AppDispatch, RootState } from '../store';
-import { fetchFutureAppointments } from '../store/slices/appointments/appointmentSlice';
+import {
+  cancelAppointment,
+  fetchFutureAppointments,
+} from '../store/slices/appointments/appointmentSlice';
 import { Link as RouterLink } from 'react-router-dom';
 import AddIcon from '@mui/icons-material/Add';
 import type { CalendarPatientAppointment } from '../types/schedule';
@@ -29,13 +38,29 @@ import type { CalendarPatientAppointment } from '../types/schedule';
 const AppointmentsPatientPage = () => {
   const dispatch = useDispatch<AppDispatch>();
   const { appointments, status, error } = useSelector((state: RootState) => state.appointments);
+  const [isCancelConfirmOpen, setIsCancelConfirmOpen] = useState(false);
+  const [appointmentToCancelId, setAppointmentToCancelId] = useState<string | null>(null);
 
   useEffect(() => {
-    // mudar para enum
-    if (status === 'idle') {
-      dispatch(fetchFutureAppointments());
+    dispatch(fetchFutureAppointments());
+  }, [dispatch]);
+
+  const handleCancelAppointment = (appointmentId: string) => {
+    setAppointmentToCancelId(appointmentId); // Guarda o ID da consulta
+    setIsCancelConfirmOpen(true); // Abre o diálogo
+  };
+
+  const handleCloseConfirmDialog = () => {
+    setIsCancelConfirmOpen(false);
+    setAppointmentToCancelId(null); // Limpa o ID guardado
+  };
+
+  const handleConfirmCancellation = () => {
+    if (appointmentToCancelId) {
+      dispatch(cancelAppointment({ appointmentId: appointmentToCancelId }));
     }
-  }, [status, dispatch]);
+    handleCloseConfirmDialog(); // Fecha o diálogo após confirmar
+  };
 
   // Função para determinar a cor do Chip com base no status
   const getStatusChipColor = (status: AppointmentStatusEnum) => {
@@ -90,8 +115,6 @@ const AppointmentsPatientPage = () => {
       );
     }
 
-    console.log({ appointments });
-
     return (
       <>
         <TableContainer component={Paper} sx={{ mt: 4 }}>
@@ -102,6 +125,7 @@ const AppointmentsPatientPage = () => {
                 <TableCell>Profissional</TableCell>
                 <TableCell>Data e Hora</TableCell>
                 <TableCell>Status</TableCell>
+                <TableCell align="right">Ações</TableCell>
               </TableRow>
             </TableHead>
             <TableBody>
@@ -115,12 +139,31 @@ const AppointmentsPatientPage = () => {
                       .add(appointment.durationMinutes, 'minute')
                       .format('HH:mm')}
                   </TableCell>
+
                   <TableCell>
                     <Chip
                       label={appointment.status}
                       color={getStatusChipColor(appointment.status ?? 'CANCELADO')}
                       size="small"
                     />
+                  </TableCell>
+
+                  <TableCell align="right">
+                    {appointment.status === AppointmentStatus.AGENDADO ||
+                    appointment.status === AppointmentStatus.CONFIRMADO ? (
+                      <Button
+                        variant="outlined"
+                        color="error"
+                        size="small"
+                        onClick={() => handleCancelAppointment(appointment.id)}
+                      >
+                        Cancelar
+                      </Button>
+                    ) : (
+                      <Typography component="span" sx={{ color: 'text.secondary' }}>
+                        —
+                      </Typography>
+                    )}
                   </TableCell>
                 </TableRow>
               ))}
@@ -149,6 +192,26 @@ const AppointmentsPatientPage = () => {
         Meus Agendamentos
       </Typography>
       {renderContent()}
+
+      <Dialog
+        open={isCancelConfirmOpen}
+        onClose={handleCloseConfirmDialog}
+        aria-labelledby="alert-dialog-title"
+        aria-describedby="alert-dialog-description"
+      >
+        <DialogTitle id="alert-dialog-title">Confirmar Cancelamento</DialogTitle>
+        <DialogContent>
+          <DialogContentText id="alert-dialog-description">
+            Você tem certeza que deseja cancelar esta consulta? Esta ação não poderá ser desfeita.
+          </DialogContentText>
+        </DialogContent>
+        <DialogActions>
+          <Button onClick={handleCloseConfirmDialog}>Voltar</Button>
+          <Button onClick={handleConfirmCancellation} color="error" variant="contained" autoFocus>
+            Sim, Cancelar
+          </Button>
+        </DialogActions>
+      </Dialog>
     </Container>
   );
 };

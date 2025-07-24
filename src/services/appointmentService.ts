@@ -10,8 +10,12 @@ export const fetchNutritionistAppointmentsApi = () => {
   return apiClient.get<NutritionistAppointment[]>('/nutritionists/me/appointments');
 };
 
-export const cancelAppointmentApi = (appointmentId: string) => {
+export const cancelAppointmentByNutritionistApi = (appointmentId: string) => {
   return apiClient.post(`/nutritionists/me/appointments/${appointmentId}`);
+};
+
+export const cancelAppointmentByPatientApi = (appointmentId: string) => {
+  return apiClient.post(`/patients/me/appointments/${appointmentId}`);
 };
 
 export interface CreateAppointmentPayload {
