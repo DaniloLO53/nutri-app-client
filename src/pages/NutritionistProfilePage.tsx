@@ -29,36 +29,38 @@ import {
   fetchNutritionistProfile,
   updateNutritionistProfile,
 } from '../store/slices/nutritionistProfiles/nutritionistProfileSlice';
-import type {
-  NutritionistLocation,
-  NutritionistProfile,
-} from '../types/nutritionistProfile';
+import type { NutritionistLocation, NutritionistProfile } from '../types/nutritionistProfile';
 
 const NutritionistProfilePage = () => {
   const dispatch = useDispatch<AppDispatch>();
-  const { profile, status, error } = useSelector(
-    (state: RootState) => state.nutritionistProfile,
-  );
+  const { profile, status, error } = useSelector((state: RootState) => state.nutritionistProfile);
 
   const [ibgeStates, setIbgeStates] = useState<IBGEState[]>([]);
   const [ibgeCities, setIbgeCities] = useState<IBGECity[]>([]);
   const [isCitiesLoading, setIsCitiesLoading] = useState(false);
 
-  const [newSelectedState, setNewSelectedState] = useState<IBGEState | null>(
-    null,
-  );
+  const [newSelectedState, setNewSelectedState] = useState<IBGEState | null>(null);
   const [newSelectedCity, setNewSelectedCity] = useState<IBGECity | null>(null);
   const [newAddress, setNewAddress] = useState('');
   const [newPhone1, setNewPhone1] = useState('');
   const [newPhone2, setNewPhone2] = useState('');
   const [newPhone3, setNewPhone3] = useState('');
 
-  const { register, control, handleSubmit, reset } =
-    useForm<NutritionistProfile>();
+  const { register, control, handleSubmit, reset } = useForm<NutritionistProfile>({
+    // Define a estrutura inicial do formulário
+    defaultValues: {
+      firstName: '',
+      lastName: '',
+      email: '',
+      crf: '',
+      acceptsRemote: false, // Importante para o checkbox
+      locations: [], // MUITO importante para o useFieldArray
+    },
+  });
 
   const { fields, append, remove } = useFieldArray<NutritionistProfile>({
     control,
-    name: 'nutritionistLocations',
+    name: 'locations',
   });
 
   // useEffect para popular o formulário quando os dados do perfil chegarem
@@ -117,7 +119,7 @@ const NutritionistProfilePage = () => {
   const onSubmit: SubmitHandler<NutritionistProfile> = (data) => {
     const transformedData = {
       ...data,
-      nutritionistLocations: data.nutritionistLocations?.map((location) => ({
+      locations: data.locations?.map((location) => ({
         ...location,
         phone2: location.phone2 || null, // Converte "" para null
         phone3: location.phone3 || null, // Converte "" para null
@@ -162,25 +164,9 @@ const NutritionistProfilePage = () => {
 
       <Paper component="form" onSubmit={handleSubmit(onSubmit)} sx={{ p: 3 }}>
         <Typography variant="h6">Informações Pessoais</Typography>
-        <TextField
-          fullWidth
-          margin="normal"
-          label="Nome Completo"
-          {...register('firstName')}
-        />
-        <TextField
-          fullWidth
-          margin="normal"
-          label="Nome Completo"
-          {...register('lastName')}
-        />
-        <TextField
-          fullWidth
-          margin="normal"
-          label="Email"
-          type="email"
-          {...register('email')}
-        />
+        <TextField fullWidth margin="normal" label="Nome Completo" {...register('firstName')} />
+        <TextField fullWidth margin="normal" label="Nome Completo" {...register('lastName')} />
+        <TextField fullWidth margin="normal" label="Email" type="email" {...register('email')} />
         <TextField fullWidth margin="normal" label="CRF" {...register('crf')} />
         <FormControlLabel
           control={<Checkbox {...register('acceptsRemote')} />}
@@ -192,11 +178,7 @@ const NutritionistProfilePage = () => {
         </Typography>
         <Box sx={{ display: 'flex', flexDirection: 'column', gap: 2 }}>
           {fields.map((field, index) => (
-            <Paper
-              key={field.id}
-              variant="outlined"
-              sx={{ p: 2, position: 'relative' }}
-            >
+            <Paper key={field.id} variant="outlined" sx={{ p: 2, position: 'relative' }}>
               <IconButton
                 onClick={() => remove(index)}
                 color="error"
@@ -211,28 +193,17 @@ const NutritionistProfilePage = () => {
                 color="text.secondary"
               >{`${field.ibgeApiCity}, ${field.ibgeApiState}`}</Typography>
               <Box sx={{ display: 'flex', gap: 2, mt: 1 }}>
-                <Typography
-                  variant="body2"
-                  sx={{ display: 'flex', alignItems: 'center' }}
-                >
+                <Typography variant="body2" sx={{ display: 'flex', alignItems: 'center' }}>
                   <PhoneIcon fontSize="small" sx={{ mr: 0.5 }} /> {field.phone1}
                 </Typography>
                 {field.phone2 && (
-                  <Typography
-                    variant="body2"
-                    sx={{ display: 'flex', alignItems: 'center' }}
-                  >
-                    <PhoneIcon fontSize="small" sx={{ mr: 0.5 }} />{' '}
-                    {field.phone2}
+                  <Typography variant="body2" sx={{ display: 'flex', alignItems: 'center' }}>
+                    <PhoneIcon fontSize="small" sx={{ mr: 0.5 }} /> {field.phone2}
                   </Typography>
                 )}
                 {field.phone3 && (
-                  <Typography
-                    variant="body2"
-                    sx={{ display: 'flex', alignItems: 'center' }}
-                  >
-                    <PhoneIcon fontSize="small" sx={{ mr: 0.5 }} />{' '}
-                    {field.phone3}
+                  <Typography variant="body2" sx={{ display: 'flex', alignItems: 'center' }}>
+                    <PhoneIcon fontSize="small" sx={{ mr: 0.5 }} /> {field.phone3}
                   </Typography>
                 )}
               </Box>
@@ -257,9 +228,7 @@ const NutritionistProfilePage = () => {
                 label="Estado"
                 value={newSelectedState?.sigla || ''}
                 onChange={(e) =>
-                  setNewSelectedState(
-                    ibgeStates.find((s) => s.sigla === e.target.value) || null,
-                  )
+                  setNewSelectedState(ibgeStates.find((s) => s.sigla === e.target.value) || null)
                 }
               >
                 {ibgeStates.map((s) => (
@@ -269,18 +238,13 @@ const NutritionistProfilePage = () => {
                 ))}
               </Select>
             </FormControl>
-            <FormControl
-              fullWidth
-              disabled={!newSelectedState || isCitiesLoading}
-            >
+            <FormControl fullWidth disabled={!newSelectedState || isCitiesLoading}>
               <InputLabel>Município</InputLabel>
               <Select
                 label="Município"
                 value={newSelectedCity?.nome || ''}
                 onChange={(e) =>
-                  setNewSelectedCity(
-                    ibgeCities.find((c) => c.nome === e.target.value) || null,
-                  )
+                  setNewSelectedCity(ibgeCities.find((c) => c.nome === e.target.value) || null)
                 }
               >
                 {isCitiesLoading ? (
@@ -323,9 +287,7 @@ const NutritionistProfilePage = () => {
           <Button
             startIcon={<AddCircleOutlineIcon />}
             onClick={handleAddLocation}
-            disabled={
-              !newSelectedState || !newSelectedCity || !newAddress || !newPhone1
-            }
+            disabled={!newSelectedState || !newSelectedCity || !newAddress || !newPhone1}
             sx={{ mt: 2 }}
           >
             Adicionar Local

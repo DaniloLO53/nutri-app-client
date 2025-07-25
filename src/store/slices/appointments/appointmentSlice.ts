@@ -13,7 +13,7 @@ import type { RootState } from '../..';
 import { UserRole } from '../../../types/user';
 
 export const createAppointmentForPatient = createAsyncThunk<
-  CalendarNutritionistAppointment, // <-- 2. Use o novo tipo como tipo de retorno
+  CalendarNutritionistAppointment,
   { scheduleId: string; patientId: string; isRemote: boolean; startDate: string; endDate: string },
   { rejectValue: string }
 >('schedule/createAppointment', async (data, { rejectWithValue, dispatch, getState }) => {
@@ -30,7 +30,6 @@ export const createAppointmentForPatient = createAsyncThunk<
       dispatch(fetchOwnSchedule({ startDate, endDate }));
     }
 
-    // 3. Retorne o objeto composto com a resposta da API e o ID original
     return response.data;
   } catch (error) {
     const axiosError = error as AxiosError<{ message: string }>;
@@ -62,13 +61,11 @@ export const cancelAppointment = createAsyncThunk<
 
 export const fetchFutureAppointments = createAsyncThunk<
   CalendarNutritionistAppointment[],
-  // Appointment[],
   void,
   { rejectValue: string }
 >('appointments/fetchAll', async (_, { rejectWithValue }) => {
   try {
     const response = await fetchPatientAppointmentsApi();
-    console.log({ response: response.data });
     return response.data;
   } catch (error) {
     const axiosError = error as AxiosError<{ message: string }>;
@@ -91,10 +88,13 @@ const appointmentSlice = createSlice({
       state.status = 'idle';
       state.error = null;
     },
+    clearError: (state) => {
+      state.error = null;
+      state.status = 'idle';
+    },
   },
   extraReducers: (builder) => {
     builder
-
       // GET APPOINTMENTS
       .addCase(fetchFutureAppointments.pending, (state) => {
         state.status = 'loading';
@@ -120,8 +120,20 @@ const appointmentSlice = createSlice({
         state.error = action.payload ?? 'Falha ao deletar consulta.';
         state.status = 'failed';
       })
+      .addCase(cancelAppointment.pending, (state) => {
+        state.status = 'loading';
+        state.error = null;
+      })
 
       // CREATE APPOINTMENT
+      .addCase(createAppointmentForPatient.pending, (state) => {
+        state.status = 'loading';
+        state.error = null;
+      })
+      .addCase(createAppointmentForPatient.rejected, (state, action) => {
+        state.error = action.payload ?? 'Falha ao deletar consulta.';
+        state.status = 'failed';
+      })
       .addCase(
         createAppointmentForPatient.fulfilled,
         (state, action: PayloadAction<CalendarNutritionistAppointment>) => {
@@ -132,5 +144,5 @@ const appointmentSlice = createSlice({
   },
 });
 
-export const { clearAppointments } = appointmentSlice.actions;
+export const { clearAppointments, clearError } = appointmentSlice.actions;
 export default appointmentSlice.reducer;

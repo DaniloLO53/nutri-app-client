@@ -31,6 +31,7 @@ import {
   deleteSchedule,
   fetchOwnSchedule,
   deleteCanceledAppointment,
+  clearError,
 } from '../store/slices/schedules/scheduleSlice';
 import CalendarGrid from '../components/CalendarGrid';
 import AppointmentCreateNutritionist from '../components/AppointmentCreateNutritionist';
@@ -43,13 +44,18 @@ import { cancelAppointment } from '../store/slices/appointments/appointmentSlice
 import { fetchLocations } from '../store/slices/locations/locationSlice';
 import { orange } from '@mui/material/colors';
 import { AppointmentStatus } from '../types/appointment';
+import { toast } from 'react-toastify';
 
 const DURATIONS = [15, 30, 45, 60];
 
 const ScheduleCreateNutritionistPage = () => {
   const dispatch = useDispatch<AppDispatch>();
 
-  const { schedules, status: scheduleStatus } = useSelector((state: RootState) => state.schedule);
+  const {
+    schedules,
+    status: scheduleStatus,
+    error,
+  } = useSelector((state: RootState) => state.schedule);
   const { locations, status: locationsStatus } = useSelector((state: RootState) => state.locations);
   const [selectedLocationId, setSelectedLocationId] = useState<string>('');
 
@@ -84,13 +90,18 @@ const ScheduleCreateNutritionistPage = () => {
   ];
 
   useEffect(() => {
+    if (error) {
+      toast.error(error);
+      dispatch(clearError());
+    }
+
     dispatch(
       fetchOwnSchedule({
         startDate: startOfWeek.format('YYYY-MM-DD'), // Envia apenas a data. Ex: "2025-07-13"
         endDate: endOfWeek.format('YYYY-MM-DD'), // Ex: "2025-07-19"
       }),
     );
-  }, [dispatch, startOfWeek, endOfWeek]);
+  }, [dispatch, startOfWeek, endOfWeek, error]);
 
   const handleSlotClick = (slotDate: Dayjs) => {
     setSelectedSlot(slotDate);

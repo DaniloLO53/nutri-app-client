@@ -24,7 +24,7 @@ export const searchAvailableNutritionistsApi = (params: AvailableNutritionistSea
   }
 
   if (params.acceptsRemote) {
-    queryParams.append('acceptsRemote', 'true');
+    queryParams.append('acceptsRemote', String(params.acceptsRemote));
   }
 
   return apiClient.get<AvailableNutritionist[]>(`/nutritionists/search?${queryParams.toString()}`);

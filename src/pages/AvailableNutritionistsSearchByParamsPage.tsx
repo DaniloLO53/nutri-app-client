@@ -57,14 +57,6 @@ const AppointmentCreatePage = () => {
   });
 
   const selectedState = watch('ibgeApiState');
-  const isRemote = watch('acceptsRemote');
-
-  useEffect(() => {
-    if (isRemote) {
-      setValue('ibgeApiState', '');
-      setValue('ibgeApiCity', '');
-    }
-  }, [isRemote, setValue]);
 
   // useEffect para buscar estados
   // UseEffect para buscar os estados do IBGE quando o componente montar
@@ -189,11 +181,11 @@ const AppointmentCreatePage = () => {
 
           <FormControlLabel
             control={<Checkbox {...register('acceptsRemote')} />}
-            label="Apenas Teleconsulta"
+            label="Aceita Teleconsulta"
             sx={{ mb: 2 }}
           />
 
-          <FormControl fullWidth disabled={isLoadingStates || isRemote}>
+          <FormControl fullWidth disabled={isLoadingStates}>
             <InputLabel id="state-select-label">Estado</InputLabel>
             <Select
               labelId="state-select-label"
@@ -212,7 +204,7 @@ const AppointmentCreatePage = () => {
             </Select>
           </FormControl>
 
-          <FormControl fullWidth disabled={!selectedState || isLoadingCities || isRemote}>
+          <FormControl fullWidth disabled={!selectedState || isLoadingCities}>
             <InputLabel id="city-select-label">Município</InputLabel>
             <Select
               labelId="city-select-label"

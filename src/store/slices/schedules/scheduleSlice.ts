@@ -152,6 +152,9 @@ const scheduleSlice = createSlice({
       state.status = 'idle';
       state.error = null;
     },
+    clearError: (state) => {
+      state.error = null;
+    },
   },
   extraReducers: (builder) => {
     builder
@@ -198,18 +201,24 @@ const scheduleSlice = createSlice({
       })
 
       // CREATE SCHEDULE
+      .addCase(createSchedule.pending, (state) => {
+        state.status = 'loading';
+        state.error = null;
+      })
       .addCase(createSchedule.fulfilled, (state, action: PayloadAction<CalendarSchedule>) => {
-        // Adiciona o novo evento à lista existente para feedback imediato
         state.status = 'succeeded';
         state.schedules.push(action.payload);
       })
       .addCase(createSchedule.rejected, (state, action) => {
-        // Apenas armazena o erro. Um toast de erro pode ser exibido na UI.
         state.error = action.payload ?? 'Falha ao criar horário.';
         state.status = 'failed';
       })
 
-      // RECREATE SCHEDULE
+      // DELETE CANCELED APPOINTMENT
+      .addCase(deleteCanceledAppointment.pending, (state) => {
+        state.status = 'loading';
+        state.error = null;
+      })
       .addCase(
         deleteCanceledAppointment.fulfilled,
         (state, action: PayloadAction<CalendarSchedule>) => {
@@ -225,6 +234,10 @@ const scheduleSlice = createSlice({
       })
 
       // DELETE SCHEDULE
+      .addCase(deleteSchedule.pending, (state) => {
+        state.status = 'loading';
+        state.error = null;
+      })
       .addCase(deleteSchedule.fulfilled, (state, action) => {
         // Remove o evento do estado local sem precisar de um refetch
         state.schedules = state.schedules.filter(({ id }) => id !== action.payload);
@@ -237,5 +250,5 @@ const scheduleSlice = createSlice({
   },
 });
 
-export const { clearSchedule } = scheduleSlice.actions;
+export const { clearSchedule, clearError } = scheduleSlice.actions;
 export default scheduleSlice.reducer;

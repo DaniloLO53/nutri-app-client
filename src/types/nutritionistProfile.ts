@@ -14,7 +14,7 @@ export interface NutritionistProfile {
   lastName: string;
   email: string;
   acceptsRemote: boolean;
-  nutritionistLocations: NutritionistLocation[];
+  locations: NutritionistLocation[];
 }
 
 export interface NutritionistProfileState {

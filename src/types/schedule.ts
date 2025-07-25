@@ -13,7 +13,7 @@ export interface AvailableNutritionist {
   address: string;
   ibgeApiCity: string;
   ibgeApiState: string;
-  acceptsRemote: string;
+  acceptsRemote: boolean;
 }
 
 export interface AvailableNutritionistState {
