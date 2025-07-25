@@ -26,8 +26,12 @@ import {
 } from '../store/slices/patients/patientSearchSlice';
 import type { PatientSearchResult } from '../types/patient';
 import dayjs from 'dayjs';
-import { createAppointmentForPatient } from '../store/slices/appointments/appointmentSlice';
+import {
+  clearError,
+  createAppointmentForPatient,
+} from '../store/slices/appointments/appointmentSlice';
 import type { CalendarSchedule } from '../types/schedule';
+import { toast } from 'react-toastify';
 
 interface AppointmentCreateNutritionistProps {
   open: boolean;
@@ -45,18 +49,26 @@ const AppointmentCreateNutritionist = ({
   endDate,
 }: AppointmentCreateNutritionistProps) => {
   const dispatch = useDispatch<AppDispatch>();
-  const { patients, status } = useSelector((state: RootState) => state.patientSearch);
+  const { patients, status: patientSearchStatus } = useSelector(
+    (state: RootState) => state.patientSearch,
+  );
+  const { error: appointmentsError } = useSelector((state: RootState) => state.appointments);
   const [searchTerm, setSearchTerm] = useState('');
 
   const [isConfirmOpen, setIsConfirmOpen] = useState(false);
   const [selectedPatient, setSelectedPatient] = useState<PatientSearchResult | null>(null);
   const [isRemote, setIsRemote] = useState(false);
 
-  // Usa o hook de debounce com um delay de 2000ms (2 segundos)
   const debouncedSearchTerm = useDebounce(searchTerm, 2000);
 
   useEffect(() => {
-    // Este efeito roda sempre que o valor DEBOUNCED muda
+    if (appointmentsError) {
+      toast.error(appointmentsError);
+      dispatch(clearError());
+    }
+  }, [appointmentsError, dispatch]);
+
+  useEffect(() => {
     if (debouncedSearchTerm && debouncedSearchTerm.length >= 3) {
       dispatch(searchPatientsByName(debouncedSearchTerm));
     } else {
@@ -65,7 +77,7 @@ const AppointmentCreateNutritionist = ({
   }, [debouncedSearchTerm, dispatch]);
 
   const handleClose = () => {
-    setSearchTerm(''); // Limpa a busca ao fechar
+    setSearchTerm('');
     dispatch(clearPatientSearch());
     onClose();
   };
@@ -118,12 +130,12 @@ const AppointmentCreateNutritionist = ({
             onChange={(e) => setSearchTerm(e.target.value)}
           />
           <Box sx={{ mt: 2, minHeight: '200px' }}>
-            {status === 'loading' && (
+            {patientSearchStatus === 'loading' && (
               <Box sx={{ display: 'flex', justifyContent: 'center' }}>
                 <CircularProgress />
               </Box>
             )}
-            {status === 'succeeded' && (
+            {patientSearchStatus === 'succeeded' && (
               <List>
                 {patients.length > 0
                   ? patients.map((patient) => (

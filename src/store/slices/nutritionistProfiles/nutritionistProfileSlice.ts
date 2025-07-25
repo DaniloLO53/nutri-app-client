@@ -16,12 +16,11 @@ export const fetchNutritionistProfile = createAsyncThunk<
 >('nutritionist/profile/me', async (_, { rejectWithValue }) => {
   try {
     const response = await getNutritionistProfileApi();
+    console.log({ response: response.data });
     return response.data;
   } catch (error) {
     const axiosError = error as AxiosError<{ message: string }>;
-    return rejectWithValue(
-      axiosError.response?.data?.message || 'Erro ao buscar perfil.',
-    );
+    return rejectWithValue(axiosError.response?.data?.message || 'Erro ao buscar perfil.');
   }
 });
 
@@ -35,9 +34,7 @@ export const updateNutritionistProfile = createAsyncThunk<
     return response.data;
   } catch (error) {
     const axiosError = error as AxiosError<{ message: string }>;
-    return rejectWithValue(
-      axiosError.response?.data?.message || 'Erro ao atualizar perfil.',
-    );
+    return rejectWithValue(axiosError.response?.data?.message || 'Erro ao atualizar perfil.');
   }
 });
 

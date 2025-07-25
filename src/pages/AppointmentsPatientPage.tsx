@@ -174,12 +174,12 @@ const AppointmentsPatientPage = () => {
           <Fab
             variant="extended"
             color="primary"
-            aria-label="criar nova consulta"
+            aria-label="agendar nova consulta"
             component={RouterLink}
             to="/agendamentos/novo"
           >
             <AddIcon sx={{ mr: 1 }} />
-            Criar Nova Consulta
+            Agendar Nova Consulta
           </Fab>
         </Box>
       </>
