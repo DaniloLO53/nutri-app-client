@@ -5,7 +5,6 @@ import {
   Container,
   Typography,
   Box,
-  CircularProgress,
   Alert,
   Paper,
   Table,
@@ -23,23 +22,26 @@ import {
   DialogActions,
   DialogContentText,
   Divider,
+  Skeleton,
 } from '@mui/material';
 
 import dayjs from 'dayjs';
 import { AppointmentStatus, type AppointmentStatusEnum } from '../types/appointment';
 import type { AppDispatch, RootState } from '../store';
-import {
-  cancelAppointment,
-  confirmAppointment,
-  fetchFutureAppointments,
-} from '../store/slices/appointments/appointmentSlice';
 import { Link as RouterLink } from 'react-router-dom';
 import AddIcon from '@mui/icons-material/Add';
 import type { CalendarPatientAppointment } from '../types/schedule';
+import {
+  cancelAppointment,
+  confirmAppointment,
+  fetchAppointments,
+} from '../store/slices/appointments/appointmentFromPatientSlice';
 
 const AppointmentsPatientPage = () => {
   const dispatch = useDispatch<AppDispatch>();
-  const { appointments, status, error } = useSelector((state: RootState) => state.appointments);
+  const { appointmentsPage, status, error } = useSelector(
+    (state: RootState) => state.appointmentFromPatient,
+  );
   const [isCancelConfirmOpen, setIsCancelConfirmOpen] = useState(false);
   const [appointmentToCancelId, setAppointmentToCancelId] = useState<string | null>(null);
 
@@ -47,7 +49,7 @@ const AppointmentsPatientPage = () => {
   const [appointmentToConfirmId, setAppointmentToConfirmId] = useState<string | null>(null);
 
   useEffect(() => {
-    dispatch(fetchFutureAppointments());
+    dispatch(fetchAppointments({ page: 0, size: 15 }));
   }, [dispatch]);
 
   const handleCancelAppointment = (appointmentId: string) => {
@@ -62,7 +64,9 @@ const AppointmentsPatientPage = () => {
 
   const handleConfirmCancellation = () => {
     if (appointmentToCancelId) {
-      dispatch(cancelAppointment({ appointmentId: appointmentToCancelId, isNutritionist: false }));
+      dispatch(cancelAppointment({ appointmentId: appointmentToCancelId })).then(() =>
+        dispatch(fetchAppointments({ page: 0, size: 15 })),
+      );
     }
     handleCloseConfirmDialog(); // Fecha o diálogo após confirmar
   };
@@ -79,7 +83,9 @@ const AppointmentsPatientPage = () => {
 
   const handleConfirmFinal = () => {
     if (appointmentToConfirmId) {
-      dispatch(confirmAppointment({ appointmentId: appointmentToConfirmId }));
+      dispatch(confirmAppointment({ appointmentId: appointmentToConfirmId })).then(() =>
+        dispatch(fetchAppointments({ page: 0, size: 15 })),
+      );
     }
     handleCloseConfirmationDialog();
   };
@@ -89,7 +95,7 @@ const AppointmentsPatientPage = () => {
       case AppointmentStatus.ESPERANDO_CONFIRMACAO:
         return 'warning';
       case AppointmentStatus.CONFIRMADO:
-        return 'primary';
+        return 'success';
       case AppointmentStatus.AGENDADO:
         return 'primary';
       case AppointmentStatus.CONCLUIDO:
@@ -170,13 +176,7 @@ const AppointmentsPatientPage = () => {
   };
 
   const renderContent = () => {
-    if (status === 'loading') {
-      return (
-        <Box sx={{ display: 'flex', justifyContent: 'center', mt: 4 }}>
-          <CircularProgress />
-        </Box>
-      );
-    }
+    if (status === 'loading') return renderLoadingSkeleton();
 
     if (status === 'failed') {
       return (
@@ -186,7 +186,10 @@ const AppointmentsPatientPage = () => {
       );
     }
 
-    if (status === 'succeeded' && appointments.length === 0) {
+    if (
+      status === 'succeeded' &&
+      (appointmentsPage === null || appointmentsPage.content.length === 0)
+    ) {
       return (
         <>
           <Typography sx={{ mt: 4 }}>Você ainda não possui agendamentos.</Typography>
@@ -205,8 +208,6 @@ const AppointmentsPatientPage = () => {
         </>
       );
     }
-
-    console.log({ appointments });
 
     return (
       <>
@@ -227,7 +228,7 @@ const AppointmentsPatientPage = () => {
               </TableRow>
             </TableHead>
             <TableBody>
-              {(appointments as CalendarPatientAppointment[]).map((appt) => (
+              {appointmentsPage?.content.map((appt) => (
                 <TableRow key={appt.id}>
                   <TableCell>{appt.isRemote ? 'TELECONSULTA' : 'PRESENCIAL'}</TableCell>
                   <TableCell>{appt.nutritionist?.name}</TableCell>
@@ -322,6 +323,56 @@ const AppointmentsPatientPage = () => {
         </DialogActions>
       </Dialog>
     </Container>
+  );
+};
+
+const renderLoadingSkeleton = () => {
+  return (
+    <TableContainer component={Paper} sx={{ mt: 3 }}>
+      <Table aria-label="carregando agendamentos">
+        <TableHead>
+          <TableRow
+            sx={{
+              '& .MuiTableCell-root': { fontWeight: 'bold' },
+              backgroundColor: 'grey.100', // Um cinza bem clarinho
+            }}
+          >
+            <TableCell>Modalidade</TableCell>
+            <TableCell>Profissional</TableCell>
+            <TableCell>Data e Hora</TableCell>
+            <TableCell align="center">Status</TableCell>
+            <TableCell align="center">Ações</TableCell>
+          </TableRow>
+        </TableHead>
+        <TableBody>
+          {Array.from({ length: 5 }).map((_, index) => (
+            <TableRow key={index}>
+              <TableCell>
+                <Skeleton variant="text" width="80%" />
+              </TableCell>
+              <TableCell>
+                <Skeleton variant="text" width="90%" />
+              </TableCell>
+              <TableCell>
+                <Skeleton variant="text" width="100%" />
+                <Skeleton variant="text" width="60%" />
+              </TableCell>
+              <TableCell align="center">
+                <Skeleton
+                  variant="rectangular"
+                  width={80}
+                  height={24}
+                  sx={{ borderRadius: '16px', mx: 'auto' }}
+                />
+              </TableCell>
+              <TableCell align="center">
+                <Skeleton variant="rectangular" width={100} height={32} />
+              </TableCell>
+            </TableRow>
+          ))}
+        </TableBody>
+      </Table>
+    </TableContainer>
   );
 };
 

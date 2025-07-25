@@ -1,6 +1,5 @@
-import type { CalendarPatientAppointment, CalendarNutritionistAppointment } from './schedule';
-
-// Em types/appointment.ts
+import type { PaginatedResponse } from './pagination';
+import type { CalendarNutritionistAppointment, CalendarPatientAppointment } from './schedule';
 
 export const AppointmentStatus = {
   AGENDADO: 'AGENDADO',
@@ -14,17 +13,14 @@ export const AppointmentStatus = {
 export type AppointmentStatusEnum = keyof typeof AppointmentStatus;
 export type AppointmentStatusValue = (typeof AppointmentStatus)[keyof typeof AppointmentStatus];
 
-// export interface Appointment {
-//   id: string;
-//   nutritionistName: string;
-//   isRemote: boolean;
-//   durationMinutes: number;
-//   startTime: Date;
-//   status: AppointmentStatusEnum;
-// }
+export interface AppointmentStateNutritionist {
+  appointmentsPage: PaginatedResponse<CalendarNutritionistAppointment> | null;
+  status: 'idle' | 'loading' | 'succeeded' | 'failed';
+  error: string | null;
+}
 
-export interface AppointmentState {
-  appointments: (CalendarPatientAppointment | CalendarNutritionistAppointment)[];
+export interface AppointmentStatePatient {
+  appointmentsPage: PaginatedResponse<CalendarPatientAppointment> | null;
   status: 'idle' | 'loading' | 'succeeded' | 'failed';
   error: string | null;
 }

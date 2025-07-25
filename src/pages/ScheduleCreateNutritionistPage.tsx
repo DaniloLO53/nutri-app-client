@@ -9,7 +9,6 @@ import {
   Typography,
   Box,
   Button,
-  CircularProgress,
   Select,
   MenuItem,
   FormControl,
@@ -40,23 +39,19 @@ import {
   type CalendarNutritionistAppointment,
   type CalendarSchedule,
 } from '../types/schedule';
-import { cancelAppointment } from '../store/slices/appointments/appointmentSlice';
 import { fetchLocations } from '../store/slices/locations/locationSlice';
 import { green } from '@mui/material/colors';
 import { AppointmentStatus } from '../types/appointment';
 import { toast } from 'react-toastify';
+import { cancelAppointment } from '../store/slices/appointments/appointmentFromNutritionistSlice';
+import CalendarGridSkeleton from '../components/CalendarGridSkeleton';
 
 const DURATIONS = [15, 30, 45, 60];
 
 const ScheduleCreateNutritionistPage = () => {
   const dispatch = useDispatch<AppDispatch>();
 
-  const {
-    schedules,
-    status: scheduleStatus,
-    error,
-  } = useSelector((state: RootState) => state.schedule);
-  const { locations, status: locationsStatus } = useSelector((state: RootState) => state.locations);
+  const state = useSelector((state: RootState) => state);
   const [selectedLocationId, setSelectedLocationId] = useState<string>('');
 
   const [currentDate, setCurrentDate] = useState(dayjs());
@@ -79,6 +74,8 @@ const ScheduleCreateNutritionistPage = () => {
 
   const startOfWeek = useMemo(() => currentDate.startOf('week'), [currentDate]);
   const endOfWeek = useMemo(() => currentDate.endOf('week'), [currentDate]);
+  const startDate = startOfWeek.format('YYYY-MM-DD');
+  const endDate = endOfWeek.format('YYYY-MM-DD');
 
   const legendItems = [
     { label: 'Disponível', color: 'primary.light' }, // Azul claro
@@ -91,18 +88,13 @@ const ScheduleCreateNutritionistPage = () => {
   ];
 
   useEffect(() => {
-    if (error) {
-      toast.error(error);
+    if (state.schedule.error) {
+      toast.error(state.schedule.error);
       dispatch(clearError());
     }
 
-    dispatch(
-      fetchOwnSchedule({
-        startDate: startOfWeek.format('YYYY-MM-DD'), // Envia apenas a data. Ex: "2025-07-13"
-        endDate: endOfWeek.format('YYYY-MM-DD'), // Ex: "2025-07-19"
-      }),
-    );
-  }, [dispatch, startOfWeek, endOfWeek, error]);
+    dispatch(fetchOwnSchedule({ startDate, endDate }));
+  }, [dispatch, startDate, endDate, state.schedule.error]);
 
   const handleSlotClick = (slotDate: Dayjs) => {
     setSelectedSlot(slotDate);
@@ -160,13 +152,8 @@ const ScheduleCreateNutritionistPage = () => {
   const handleConfirmCancelAppointment = () => {
     if (!selectedAppointment) return;
 
-    dispatch(
-      cancelAppointment({
-        appointmentId: selectedAppointment.id,
-        startDate: startOfWeek.format('YYYY-MM-DD'),
-        endDate: endOfWeek.format('YYYY-MM-DD'),
-        isNutritionist: true,
-      }),
+    dispatch(cancelAppointment({ appointmentId: selectedAppointment.id })).then(() =>
+      dispatch(fetchOwnSchedule({ startDate, endDate })),
     );
     handleCloseDialogs();
   };
@@ -202,7 +189,7 @@ const ScheduleCreateNutritionistPage = () => {
       deleteCanceledAppointment({
         appointmentId: selectedAppointment.id,
       }),
-    );
+    ).then(() => dispatch(fetchOwnSchedule({ startDate, endDate })));
     handleCloseDialogs();
   };
 
@@ -224,7 +211,7 @@ const ScheduleCreateNutritionistPage = () => {
         sx={{
           display: 'flex',
           justifyContent: 'space-between',
-          alignItems: 'center',
+          alignItems: 'start',
           mb: 3,
         }}
       >
@@ -290,15 +277,13 @@ const ScheduleCreateNutritionistPage = () => {
           </Box>
         ))}
       </Box>
-      {scheduleStatus === 'loading' ? (
-        <Box sx={{ display: 'flex', justifyContent: 'center' }}>
-          <CircularProgress />
-        </Box>
+      {state.schedule.status === 'loading' ? (
+        <CalendarGridSkeleton startOfWeek={startOfWeek} slotDuration={slotDuration} />
       ) : (
         <CalendarGrid
           startOfWeek={startOfWeek}
           slotDuration={slotDuration}
-          events={schedules}
+          events={state.schedule.schedules}
           onSlotClick={handleSlotClick}
           onEventClick={handleEventClick}
         />
@@ -324,10 +309,10 @@ const ScheduleCreateNutritionistPage = () => {
               value={selectedLocationId}
               onChange={(e) => setSelectedLocationId(e.target.value as string)}
             >
-              {locationsStatus === 'loading' ? (
+              {state.locations.status === 'loading' ? (
                 <MenuItem disabled>Carregando locais...</MenuItem>
               ) : (
-                locations.map((location) => (
+                state.locations.locations.map((location) => (
                   <MenuItem key={location.id} value={location.id}>
                     {location.address}
                   </MenuItem>
@@ -486,8 +471,7 @@ const ScheduleCreateNutritionistPage = () => {
         open={isAppointmentCreateOpen}
         onClose={handleCloseDialogs}
         schedule={selectedSchedule}
-        startDate={startOfWeek.format('YYYY-MM-DD')}
-        endDate={endOfWeek.format('YYYY-MM-DD')}
+        currentDate={currentDate}
       />
     </Container>
   );

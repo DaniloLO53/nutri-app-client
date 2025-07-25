@@ -35,7 +35,8 @@ import {
   type CalendarSchedule,
 } from '../types/schedule';
 import { useNavigate, useParams } from 'react-router-dom';
-import { createAppointmentForPatient } from '../store/slices/appointments/appointmentSlice';
+import { createAppointment } from '../store/slices/appointments/appointmentFromPatientSlice';
+import CalendarGridSkeleton from '../components/CalendarGridSkeleton';
 
 const DURATIONS = [15, 30, 45, 60];
 
@@ -93,23 +94,17 @@ const ScheduleCreatePagePatient = () => {
     }
 
     try {
-      // Despacha a ação e espera o resultado com .unwrap()
       await dispatch(
-        createAppointmentForPatient({
+        createAppointment({
           scheduleId: selectedSchedule.id,
           patientId: userInfo.id,
           isRemote: isRemote,
-          startDate: startOfWeek.format('YYYY-MM-DD'),
-          endDate: endOfWeek.format('YYYY-MM-DD'),
         }),
       ).unwrap();
 
-      // Se a linha acima não lançou um erro, o agendamento foi um sucesso!
       setIsBookingSuccess(true);
     } catch (error) {
-      // Se o thunk for rejeitado, o erro será capturado aqui
       console.error('Falha ao agendar a consulta:', error);
-      // Aqui você pode mostrar uma notificação de erro para o usuário (ex: com react-toastify)
     }
   };
 
@@ -198,9 +193,7 @@ const ScheduleCreatePagePatient = () => {
       </Box>
 
       {scheduleStatus === 'loading' ? (
-        <Box sx={{ display: 'flex', justifyContent: 'center' }}>
-          <CircularProgress />
-        </Box>
+        <CalendarGridSkeleton startOfWeek={startOfWeek} slotDuration={slotDuration} />
       ) : (
         <CalendarGrid
           startOfWeek={startOfWeek}

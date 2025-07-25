@@ -75,7 +75,8 @@ export default function PrimarySearchAppBar() {
 
   const handleNavigateToProfile = () => {
     handleMenuClose();
-    navigate('/perfil/nutricionista');
+    const profile = userInfo?.role === UserRole.ROLE_NUTRITIONIST ? 'nutricionista' : 'paciente';
+    navigate(`/perfil/${profile}`);
   };
 
   const handleProfileMenuOpen = (event: React.MouseEvent<HTMLElement>) => {

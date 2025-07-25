@@ -1,10 +1,10 @@
 import { configureStore } from '@reduxjs/toolkit';
 import registerReducer from './slices/auth/registerPatientSlice';
 import signInUserReducer from './slices/auth/signInSlice';
-import appointmentReducer from './slices/appointments/appointmentSlice';
+import appointmentFromNutritionistReducer from './slices/appointments/appointmentFromNutritionistSlice';
 import availableNutritionistSearchReducer from './slices/schedules/availableNutritionistSearchSlice';
 import nutritionistProfileReducer from './slices/nutritionistProfiles/nutritionistProfileSlice';
-import nutritionistAppointmentReducer from './slices/appointments/nutritionistAppointmentSlice';
+import appointmentFromPatientReducer from './slices/appointments/appointmentFromPatientSlice';
 import scheduleReducer from './slices/schedules/scheduleSlice';
 import patientSearchReducer from './slices/patients/patientSearchSlice';
 import locationsReducer from './slices/locations/locationSlice';
@@ -15,11 +15,11 @@ export const store = configureStore({
     // Ex: useSelector((state) => state.register.loading)
     register: registerReducer,
     signIn: signInUserReducer,
-    appointments: appointmentReducer,
+    appointmentFromNutritionist: appointmentFromNutritionistReducer,
+    appointmentFromPatient: appointmentFromPatientReducer,
+    schedule: scheduleReducer,
     availableNutritionistSearch: availableNutritionistSearchReducer,
     nutritionistProfile: nutritionistProfileReducer,
-    nutritionistAppointments: nutritionistAppointmentReducer,
-    schedule: scheduleReducer,
     patientSearch: patientSearchReducer,
     locations: locationsReducer,
   },
