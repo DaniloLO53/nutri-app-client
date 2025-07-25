@@ -42,7 +42,7 @@ import {
 } from '../types/schedule';
 import { cancelAppointment } from '../store/slices/appointments/appointmentSlice';
 import { fetchLocations } from '../store/slices/locations/locationSlice';
-import { orange } from '@mui/material/colors';
+import { green } from '@mui/material/colors';
 import { AppointmentStatus } from '../types/appointment';
 import { toast } from 'react-toastify';
 
@@ -81,12 +81,13 @@ const ScheduleCreateNutritionistPage = () => {
   const endOfWeek = useMemo(() => currentDate.endOf('week'), [currentDate]);
 
   const legendItems = [
-    { label: 'Disponível', color: 'primary.light' },
-    { label: 'Agendado', color: 'warning.light' },
-    { label: 'Confirmado', color: 'success.light' },
-    { label: 'Concluído', color: 'grey.400' },
-    { label: 'Cancelado', color: 'error.light' },
-    { label: 'Não Compareceu', color: orange[300] },
+    { label: 'Disponível', color: 'primary.light' }, // Azul claro
+    { label: 'Agendado', color: green[200] }, // Verde bem claro
+    { label: 'Esperando Confirmação', color: 'success.light' }, // Verde claro
+    { label: 'Confirmado', color: 'success.dark' }, // Verde escuro
+    { label: 'Concluído', color: 'grey.500' }, // Cinza
+    { label: 'Cancelado', color: 'error.light' }, // Vermelho claro
+    { label: 'Não Compareceu', color: 'error.dark' }, // Vermelho escuro
   ];
 
   useEffect(() => {
@@ -164,6 +165,7 @@ const ScheduleCreateNutritionistPage = () => {
         appointmentId: selectedAppointment.id,
         startDate: startOfWeek.format('YYYY-MM-DD'),
         endDate: endOfWeek.format('YYYY-MM-DD'),
+        isNutritionist: true,
       }),
     );
     handleCloseDialogs();

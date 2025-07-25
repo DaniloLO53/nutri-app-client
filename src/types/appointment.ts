@@ -1,7 +1,10 @@
 import type { CalendarPatientAppointment, CalendarNutritionistAppointment } from './schedule';
 
+// Em types/appointment.ts
+
 export const AppointmentStatus = {
   AGENDADO: 'AGENDADO',
+  ESPERANDO_CONFIRMACAO: 'ESPERANDO_CONFIRMACAO',
   CONFIRMADO: 'CONFIRMADO',
   CONCLUIDO: 'CONCLUIDO',
   CANCELADO: 'CANCELADO',

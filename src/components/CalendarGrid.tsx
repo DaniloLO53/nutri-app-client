@@ -7,7 +7,7 @@ import {
   type CalendarSchedule,
 } from '../types/schedule';
 import { AppointmentStatus, type AppointmentStatusValue } from '../types/appointment';
-import { orange } from '@mui/material/colors';
+import { green } from '@mui/material/colors';
 
 interface CalendarGridProps {
   startOfWeek: dayjs.Dayjs;
@@ -18,16 +18,20 @@ interface CalendarGridProps {
 }
 
 const statusStyleMap: Record<AppointmentStatusValue, { bg: string; border: string }> = {
-  [AppointmentStatus.AGENDADO]: { bg: 'warning.light', border: 'warning.dark' },
-  [AppointmentStatus.CONFIRMADO]: {
+  [AppointmentStatus.AGENDADO]: { bg: green[200], border: green[400] },
+  [AppointmentStatus.ESPERANDO_CONFIRMACAO]: {
     bg: 'success.light',
+    border: 'success.main',
+  },
+  [AppointmentStatus.CONFIRMADO]: {
+    bg: 'success.dark',
     border: 'success.dark',
   },
-  [AppointmentStatus.CONCLUIDO]: { bg: 'grey.400', border: 'grey.600' },
+  [AppointmentStatus.CONCLUIDO]: { bg: 'grey.500', border: 'grey.700' },
   [AppointmentStatus.CANCELADO]: { bg: 'error.light', border: 'error.dark' },
   [AppointmentStatus.NAO_COMPARECEU]: {
-    bg: orange[300],
-    border: orange[500],
+    bg: 'error.dark',
+    border: 'error.dark',
   },
 };
 

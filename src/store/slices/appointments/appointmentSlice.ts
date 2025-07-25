@@ -6,11 +6,15 @@ import {
   fetchPatientAppointmentsApi,
   cancelAppointmentByNutritionistApi,
   cancelAppointmentByPatientApi,
+  requestAppointmentConfirmationApi,
+  confirmAppointmentApi,
+  fetchNutritionistAppointmentsApi,
 } from '../../../services/appointmentService';
 import type { CalendarNutritionistAppointment } from '../../../types/schedule';
 import { fetchOwnSchedule } from '../schedules/scheduleSlice';
 import type { RootState } from '../..';
 import { UserRole } from '../../../types/user';
+import type { NutritionistAppointment } from '../../../types/nutritionistsAppointment';
 
 export const createAppointmentForPatient = createAsyncThunk<
   CalendarNutritionistAppointment,
@@ -37,20 +41,28 @@ export const createAppointmentForPatient = createAsyncThunk<
   }
 });
 
+// TODO: melhorar esse codigo horroroso
 export const cancelAppointment = createAsyncThunk<
   void,
-  { appointmentId: string; startDate?: string; endDate?: string },
+  { appointmentId: string; startDate?: string; endDate?: string; isNutritionist: boolean },
   { rejectValue: string }
 >(
   'schedule/cancelAppointment',
-  async ({ startDate, endDate, appointmentId }, { rejectWithValue, dispatch }) => {
+  async ({ startDate, endDate, appointmentId, isNutritionist }, { rejectWithValue, dispatch }) => {
     try {
-      if (startDate && endDate) {
+      if (isNutritionist) {
         await cancelAppointmentByNutritionistApi(appointmentId);
-        dispatch(fetchOwnSchedule({ startDate, endDate }));
       } else {
         await cancelAppointmentByPatientApi(appointmentId);
-        dispatch(fetchFutureAppointments());
+      }
+      if (startDate && endDate) {
+        dispatch(fetchOwnSchedule({ startDate, endDate }));
+      } else {
+        if (isNutritionist) {
+          dispatch(fetchNutritionistAppointments());
+        } else {
+          dispatch(fetchFutureAppointments());
+        }
       }
     } catch (error) {
       const axiosError = error as AxiosError<{ message: string }>;
@@ -58,6 +70,52 @@ export const cancelAppointment = createAsyncThunk<
     }
   },
 );
+
+export const requestAppointmentConfirmation = createAsyncThunk<
+  void,
+  { appointmentId: string },
+  { rejectValue: string }
+>(
+  'schedule/requestAppointmentConfirmation',
+  async ({ appointmentId }, { rejectWithValue, dispatch }) => {
+    try {
+      await requestAppointmentConfirmationApi(appointmentId);
+      dispatch(fetchNutritionistAppointments());
+    } catch (error) {
+      const axiosError = error as AxiosError<{ message: string }>;
+      return rejectWithValue(axiosError.response?.data?.message || 'Erro ao pedir confirmação.');
+    }
+  },
+);
+
+export const confirmAppointment = createAsyncThunk<
+  void,
+  { appointmentId: string },
+  { rejectValue: string }
+>('schedule/confirmAppointment', async ({ appointmentId }, { rejectWithValue, dispatch }) => {
+  try {
+    await confirmAppointmentApi(appointmentId);
+    dispatch(fetchFutureAppointments());
+  } catch (error) {
+    const axiosError = error as AxiosError<{ message: string }>;
+    return rejectWithValue(axiosError.response?.data?.message || 'Erro ao confirmar agendamento.');
+  }
+});
+
+export const fetchNutritionistAppointments = createAsyncThunk<
+  NutritionistAppointment[],
+  void,
+  { rejectValue: string }
+>('nutritionistAppointments/fetchAll', async (_, { rejectWithValue }) => {
+  try {
+    const response = await fetchNutritionistAppointmentsApi();
+    return response.data;
+  } catch (error) {
+    const axiosError = error as AxiosError<{ message: string }>;
+    console.log({ error });
+    return rejectWithValue(axiosError.response?.data?.message || 'Erro ao buscar agendamentos.');
+  }
+});
 
 export const fetchFutureAppointments = createAsyncThunk<
   CalendarNutritionistAppointment[],
@@ -111,6 +169,18 @@ const appointmentSlice = createSlice({
         }
       })
 
+      .addCase(fetchNutritionistAppointments.pending, (state) => {
+        state.status = 'loading';
+      })
+      .addCase(fetchNutritionistAppointments.fulfilled, (state, action) => {
+        state.status = 'succeeded';
+        state.appointments = action.payload;
+      })
+      .addCase(fetchNutritionistAppointments.rejected, (state, action) => {
+        state.status = 'failed';
+        state.error = action.payload ?? null;
+      })
+
       // DELETE APPOINTMENT
       .addCase(cancelAppointment.fulfilled, (state) => {
         // state.appointments = state.appointments.filter(({ id }) => id !== action.payload);
@@ -140,7 +210,33 @@ const appointmentSlice = createSlice({
           state.appointments.push(action.payload);
           state.status = 'succeeded';
         },
-      );
+      )
+
+      // CONFIRM APPOINTMENT
+      .addCase(confirmAppointment.fulfilled, (state) => {
+        state.status = 'succeeded';
+      })
+      .addCase(confirmAppointment.rejected, (state, action) => {
+        state.error = action.payload ?? 'Falha ao confirmar consulta.';
+        state.status = 'failed';
+      })
+      .addCase(confirmAppointment.pending, (state) => {
+        state.status = 'loading';
+        state.error = null;
+      })
+
+      // REQUEST APPOINTMENT CONFIRMATION
+      .addCase(requestAppointmentConfirmation.fulfilled, (state) => {
+        state.status = 'succeeded';
+      })
+      .addCase(requestAppointmentConfirmation.rejected, (state, action) => {
+        state.error = action.payload ?? 'Falha pedir confirmação de consulta.';
+        state.status = 'failed';
+      })
+      .addCase(requestAppointmentConfirmation.pending, (state) => {
+        state.status = 'loading';
+        state.error = null;
+      });
   },
 });
 

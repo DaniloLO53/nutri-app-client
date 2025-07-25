@@ -9,6 +9,7 @@ export interface AppointmentPatient {
 
 export interface NutritionistAppointment {
   id: string;
+  isRemote: boolean;
   patient: AppointmentPatient;
   startTime: string; // Formato ISO 8601
   durationMinutes: number;
