@@ -18,9 +18,7 @@ export const fetchNutritionistAppointments = createAsyncThunk<
   } catch (error) {
     const axiosError = error as AxiosError<{ message: string }>;
     console.log({ error });
-    return rejectWithValue(
-      axiosError.response?.data?.message || 'Erro ao buscar agendamentos.',
-    );
+    return rejectWithValue(axiosError.response?.data?.message || 'Erro ao buscar agendamentos.');
   }
 });
 
@@ -33,7 +31,12 @@ const initialState: NutritionistAppointmentState = {
 const nutritionistAppointmentSlice = createSlice({
   name: 'nutritionistAppointments',
   initialState,
-  reducers: {},
+  reducers: {
+    clearError: (state) => {
+      state.error = null;
+      state.status = 'idle';
+    },
+  },
   extraReducers: (builder) => {
     builder
       .addCase(fetchNutritionistAppointments.pending, (state) => {
@@ -50,4 +53,5 @@ const nutritionistAppointmentSlice = createSlice({
   },
 });
 
+export const { clearError } = nutritionistAppointmentSlice.actions;
 export default nutritionistAppointmentSlice.reducer;

@@ -22,6 +22,7 @@ import {
   DialogContent,
   DialogActions,
   DialogContentText,
+  Divider,
 } from '@mui/material';
 
 import dayjs from 'dayjs';
@@ -29,6 +30,7 @@ import { AppointmentStatus, type AppointmentStatusEnum } from '../types/appointm
 import type { AppDispatch, RootState } from '../store';
 import {
   cancelAppointment,
+  confirmAppointment,
   fetchFutureAppointments,
 } from '../store/slices/appointments/appointmentSlice';
 import { Link as RouterLink } from 'react-router-dom';
@@ -40,6 +42,9 @@ const AppointmentsPatientPage = () => {
   const { appointments, status, error } = useSelector((state: RootState) => state.appointments);
   const [isCancelConfirmOpen, setIsCancelConfirmOpen] = useState(false);
   const [appointmentToCancelId, setAppointmentToCancelId] = useState<string | null>(null);
+
+  const [isConfirmOpen, setIsConfirmOpen] = useState(false);
+  const [appointmentToConfirmId, setAppointmentToConfirmId] = useState<string | null>(null);
 
   useEffect(() => {
     dispatch(fetchFutureAppointments());
@@ -57,14 +62,32 @@ const AppointmentsPatientPage = () => {
 
   const handleConfirmCancellation = () => {
     if (appointmentToCancelId) {
-      dispatch(cancelAppointment({ appointmentId: appointmentToCancelId }));
+      dispatch(cancelAppointment({ appointmentId: appointmentToCancelId, isNutritionist: false }));
     }
     handleCloseConfirmDialog(); // Fecha o diálogo após confirmar
   };
 
-  // Função para determinar a cor do Chip com base no status
+  const handleConfirmAppointment = (appointmentId: string) => {
+    setAppointmentToConfirmId(appointmentId);
+    setIsConfirmOpen(true);
+  };
+
+  const handleCloseConfirmationDialog = () => {
+    setIsConfirmOpen(false);
+    setAppointmentToConfirmId(null);
+  };
+
+  const handleConfirmFinal = () => {
+    if (appointmentToConfirmId) {
+      dispatch(confirmAppointment({ appointmentId: appointmentToConfirmId }));
+    }
+    handleCloseConfirmationDialog();
+  };
+
   const getStatusChipColor = (status: AppointmentStatusEnum) => {
     switch (status) {
+      case AppointmentStatus.ESPERANDO_CONFIRMACAO:
+        return 'warning';
       case AppointmentStatus.CONFIRMADO:
         return 'primary';
       case AppointmentStatus.AGENDADO:
@@ -75,6 +98,74 @@ const AppointmentsPatientPage = () => {
         return 'error';
       default:
         return 'default';
+    }
+  };
+
+  const mapStatusName = (status?: AppointmentStatusEnum) => {
+    switch (status) {
+      case AppointmentStatus.ESPERANDO_CONFIRMACAO:
+        return 'ESPERANDO CONFIRMAÇÃO';
+      case AppointmentStatus.CONFIRMADO:
+        return 'CONFIRMADO';
+      case AppointmentStatus.AGENDADO:
+        return 'AGENDADO';
+      case AppointmentStatus.CONCLUIDO:
+        return 'CONCLUÍDO';
+      case AppointmentStatus.CANCELADO:
+        return 'CANCELADO';
+      case AppointmentStatus.NAO_COMPARECEU:
+        return 'NÃO COMPARECEU';
+      default:
+        return 'ERRO';
+    }
+  };
+
+  const renderActionsCell = (appointment: CalendarPatientAppointment) => {
+    switch (appointment.status) {
+      case AppointmentStatus.ESPERANDO_CONFIRMACAO:
+        return (
+          <Box sx={{ display: 'flex', gap: 1, justifyContent: 'center' }}>
+            <Button
+              variant="outlined"
+              size="small"
+              color="primary"
+              onClick={() => handleConfirmAppointment(appointment.id)}
+            >
+              Confirmar
+            </Button>
+            <Button
+              variant="outlined"
+              color="error"
+              size="small"
+              onClick={() => handleCancelAppointment(appointment.id)}
+            >
+              Cancelar
+            </Button>
+          </Box>
+        );
+
+      case AppointmentStatus.AGENDADO:
+      case AppointmentStatus.CONFIRMADO:
+        return (
+          <Button
+            variant="outlined"
+            color="error"
+            size="small"
+            onClick={() => handleCancelAppointment(appointment.id)}
+          >
+            Cancelar
+          </Button>
+        );
+
+      case AppointmentStatus.CANCELADO:
+      case AppointmentStatus.CONCLUIDO:
+      case AppointmentStatus.NAO_COMPARECEU:
+      default:
+        return (
+          <Typography component="span" sx={{ color: 'text.secondary' }}>
+            —
+          </Typography>
+        );
     }
   };
 
@@ -115,56 +206,57 @@ const AppointmentsPatientPage = () => {
       );
     }
 
+    console.log({ appointments });
+
     return (
       <>
-        <TableContainer component={Paper} sx={{ mt: 4 }}>
-          <Table sx={{ minWidth: 650 }} aria-label="tabela de agendamentos">
+        <TableContainer component={Paper} sx={{ mt: 3 }}>
+          <Table aria-label="tabela de agendamentos">
             <TableHead>
-              <TableRow>
-                <TableCell>Especialidade</TableCell>
+              <TableRow
+                sx={{
+                  '& .MuiTableCell-root': { fontWeight: 'bold' },
+                  backgroundColor: 'lightgrey',
+                }}
+              >
+                <TableCell>Modalidade</TableCell>
                 <TableCell>Profissional</TableCell>
                 <TableCell>Data e Hora</TableCell>
-                <TableCell>Status</TableCell>
-                <TableCell align="right">Ações</TableCell>
+                <TableCell align="center">Status</TableCell>
+                <TableCell align="center">Ações</TableCell>
               </TableRow>
             </TableHead>
             <TableBody>
-              {(appointments as CalendarPatientAppointment[]).map((appointment) => (
-                <TableRow key={appointment.id}>
-                  <TableCell>{appointment.isRemote ? 'TELECONSULTA' : 'PRESENCIAL'}</TableCell>
-                  <TableCell>{appointment.nutritionist?.name}</TableCell>
+              {(appointments as CalendarPatientAppointment[]).map((appt) => (
+                <TableRow key={appt.id}>
+                  <TableCell>{appt.isRemote ? 'TELECONSULTA' : 'PRESENCIAL'}</TableCell>
+                  <TableCell>{appt.nutritionist?.name}</TableCell>
                   <TableCell>
-                    {dayjs(appointment.startTime).format('DD/MM/YYYY - HH:mm')} -{' '}
-                    {dayjs(appointment.startTime)
-                      .add(appointment.durationMinutes, 'minute')
-                      .format('HH:mm')}
+                    <Typography variant="body2" sx={{ fontWeight: 500 }}>
+                      {(() => {
+                        const dateString = dayjs(appt.startTime).format(
+                          'dddd, D [de] MMMM [de] YYYY',
+                        );
+                        return dateString.charAt(0).toUpperCase() + dateString.slice(1);
+                      })()}
+                    </Typography>
+
+                    <Typography variant="caption" color="text.secondary">
+                      {`${dayjs(appt.startTime).format('HH:mm')} - ${dayjs(appt.startTime)
+                        .add(appt.durationMinutes, 'minute')
+                        .format('HH:mm')}`}
+                    </Typography>
                   </TableCell>
 
-                  <TableCell>
+                  <TableCell align="center">
                     <Chip
-                      label={appointment.status}
-                      color={getStatusChipColor(appointment.status ?? 'CANCELADO')}
+                      label={mapStatusName(appt.status)}
+                      color={getStatusChipColor(appt.status ?? 'CANCELADO')}
                       size="small"
                     />
                   </TableCell>
 
-                  <TableCell align="right">
-                    {appointment.status === AppointmentStatus.AGENDADO ||
-                    appointment.status === AppointmentStatus.CONFIRMADO ? (
-                      <Button
-                        variant="outlined"
-                        color="error"
-                        size="small"
-                        onClick={() => handleCancelAppointment(appointment.id)}
-                      >
-                        Cancelar
-                      </Button>
-                    ) : (
-                      <Typography component="span" sx={{ color: 'text.secondary' }}>
-                        —
-                      </Typography>
-                    )}
-                  </TableCell>
+                  <TableCell align="center">{renderActionsCell(appt)}</TableCell>
                 </TableRow>
               ))}
             </TableBody>
@@ -191,6 +283,7 @@ const AppointmentsPatientPage = () => {
       <Typography variant="h4" component="h1" gutterBottom>
         Meus Agendamentos
       </Typography>
+      <Divider />
       {renderContent()}
 
       <Dialog
@@ -209,6 +302,22 @@ const AppointmentsPatientPage = () => {
           <Button onClick={handleCloseConfirmDialog}>Voltar</Button>
           <Button onClick={handleConfirmCancellation} color="error" variant="contained" autoFocus>
             Sim, Cancelar
+          </Button>
+        </DialogActions>
+      </Dialog>
+
+      <Dialog open={isConfirmOpen} onClose={handleCloseConfirmationDialog}>
+        <DialogTitle>Confirmar Consulta</DialogTitle>
+        <DialogContent>
+          <DialogContentText>
+            Deseja confirmar sua presença nesta consulta? Um email de confirmação será enviado ao
+            profissional.
+          </DialogContentText>
+        </DialogContent>
+        <DialogActions>
+          <Button onClick={handleCloseConfirmationDialog}>Voltar</Button>
+          <Button onClick={handleConfirmFinal} variant="contained" color="primary" autoFocus>
+            Sim, Confirmar
           </Button>
         </DialogActions>
       </Dialog>
