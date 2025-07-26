@@ -1,4 +1,4 @@
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useMemo } from 'react';
 import { useDispatch, useSelector } from 'react-redux';
 import {
   Dialog,
@@ -28,36 +28,42 @@ import type { PatientSearchResult } from '../types/patient';
 import dayjs from 'dayjs';
 import {
   clearError,
-  createAppointmentForPatient,
-} from '../store/slices/appointments/appointmentSlice';
+  createAppointment,
+} from '../store/slices/appointments/appointmentFromNutritionistSlice';
 import type { CalendarSchedule } from '../types/schedule';
 import { toast } from 'react-toastify';
+import { fetchOwnSchedule } from '../store/slices/schedules/scheduleSlice';
 
 interface AppointmentCreateNutritionistProps {
   open: boolean;
   onClose: () => void;
   schedule: CalendarSchedule | null;
-  startDate: string;
-  endDate: string;
+  currentDate: dayjs.Dayjs;
 }
 
 const AppointmentCreateNutritionist = ({
   open,
   onClose,
   schedule,
-  startDate,
-  endDate,
+  currentDate,
 }: AppointmentCreateNutritionistProps) => {
   const dispatch = useDispatch<AppDispatch>();
   const { patients, status: patientSearchStatus } = useSelector(
     (state: RootState) => state.patientSearch,
   );
-  const { error: appointmentsError } = useSelector((state: RootState) => state.appointments);
+  const { error: appointmentsError } = useSelector(
+    (state: RootState) => state.appointmentFromNutritionist,
+  );
   const [searchTerm, setSearchTerm] = useState('');
 
   const [isConfirmOpen, setIsConfirmOpen] = useState(false);
   const [selectedPatient, setSelectedPatient] = useState<PatientSearchResult | null>(null);
   const [isRemote, setIsRemote] = useState(false);
+
+  const startOfWeek = useMemo(() => currentDate.startOf('week'), [currentDate]);
+  const endOfWeek = useMemo(() => currentDate.endOf('week'), [currentDate]);
+  const startDate = startOfWeek.format('YYYY-MM-DD');
+  const endDate = endOfWeek.format('YYYY-MM-DD');
 
   const debouncedSearchTerm = useDebounce(searchTerm, 2000);
 
@@ -93,19 +99,16 @@ const AppointmentCreateNutritionist = ({
     setIsRemote(false);
   };
 
-  // Dispara a ação final de criação da consulta
-  const handleConfirmAppointment = () => {
+  const handleConfirmCreateAppointment = () => {
     if (!schedule || !selectedPatient) return;
 
     dispatch(
-      createAppointmentForPatient({
+      createAppointment({
         scheduleId: schedule.id,
         patientId: selectedPatient.id,
         isRemote: isRemote,
-        startDate,
-        endDate,
       }),
-    );
+    ).then(() => dispatch(fetchOwnSchedule({ startDate, endDate })));
 
     handleCloseConfirmDialog(); // Fecha o modal de confirmação
     handleClose(); // Fecha o modal de busca
@@ -169,7 +172,7 @@ const AppointmentCreateNutritionist = ({
         </DialogContent>
         <DialogActions>
           <Button onClick={handleCloseConfirmDialog}>Cancelar</Button>
-          <Button onClick={handleConfirmAppointment} variant="contained" autoFocus>
+          <Button onClick={handleConfirmCreateAppointment} variant="contained" autoFocus>
             Confirmar
           </Button>
         </DialogActions>

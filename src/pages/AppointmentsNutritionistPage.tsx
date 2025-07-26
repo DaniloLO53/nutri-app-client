@@ -9,7 +9,6 @@ import {
   Typography,
   Box,
   Button,
-  CircularProgress,
   Paper,
   Table,
   TableBody,
@@ -19,61 +18,62 @@ import {
   TableRow,
   Chip,
   Divider,
+  Skeleton,
+  CircularProgress,
 } from '@mui/material';
 import EventAvailableIcon from '@mui/icons-material/EventAvailable';
 
 import { AppointmentStatus, type AppointmentStatusEnum } from '../types/appointment';
 import type { AppDispatch, RootState } from '../store';
 import {
-  fetchNutritionistAppointments,
-  clearError as nutritionistAppointmentsClearError,
-} from '../store/slices/appointments/nutritionistAppointmentSlice';
-import {
   cancelAppointment,
   clearError as appointmentsClearError,
   requestAppointmentConfirmation,
-} from '../store/slices/appointments/appointmentSlice';
+  fetchAppointments,
+} from '../store/slices/appointments/appointmentFromNutritionistSlice';
 import { toast } from 'react-toastify';
 import type { CalendarNutritionistAppointment } from '../types/schedule';
 
 const AppointmentsNutritionistPage = () => {
   const dispatch = useDispatch<AppDispatch>();
-  const {
-    appointments: nutritionistAppointments,
-    status: nutritionistAppointmentsStatus,
-    error: nutritionistAppointmentsError,
-  } = useSelector((state: RootState) => state.nutritionistAppointments);
-  const { status: appointmentsStatus, error: appointmentsError } = useSelector(
-    (state: RootState) => state.appointments,
+  const { appointmentsPage, status, error } = useSelector(
+    (state: RootState) => state.appointmentFromNutritionist,
   );
 
   useEffect(() => {
-    if (appointmentsError) {
-      toast.error(appointmentsError);
+    if (error) {
+      toast.error(error);
       dispatch(appointmentsClearError());
     }
-    if (nutritionistAppointmentsError) {
-      toast.error(nutritionistAppointmentsError);
-      dispatch(nutritionistAppointmentsClearError());
-    }
-  }, [nutritionistAppointmentsError, appointmentsError, dispatch]);
+  }, [error, dispatch]);
 
   useEffect(() => {
-    // Busca os agendamentos apenas na primeira carga do componente
-    if (nutritionistAppointmentsStatus === 'idle') {
-      dispatch(fetchNutritionistAppointments());
+    // Carrega a página 0 apenas se não houver dados
+    if (!appointmentsPage) {
+      dispatch(fetchAppointments({ page: 0, size: 15 }));
     }
-  }, [nutritionistAppointmentsStatus, dispatch]);
+  }, [dispatch, appointmentsPage]);
+
+  const handleLoadMore = () => {
+    // Apenas busca mais se não estiver carregando e se não for a última página
+    if (status !== 'loading' && !appointmentsPage?.last) {
+      const nextPage = (appointmentsPage?.number ?? 0) + 1;
+      dispatch(fetchAppointments({ page: nextPage, size: 15 }));
+    }
+  };
 
   const handleRequestConfirmation = (appointmentId: string) => {
     console.log('Pedir confirmação para a consulta:', appointmentId);
-    // TODO: Despachar a ação para pedir confirmação
-    dispatch(requestAppointmentConfirmation({ appointmentId }));
+    dispatch(requestAppointmentConfirmation({ appointmentId })).then(() =>
+      dispatch(fetchAppointments({ page: 0, size: 15 })),
+    );
   };
 
   const handleCancelAppointment = (appointmentId: string) => {
     console.log('Cancelar consulta:', appointmentId);
-    dispatch(cancelAppointment({ appointmentId, isNutritionist: true }));
+    dispatch(cancelAppointment({ appointmentId })).then(() =>
+      dispatch(fetchAppointments({ page: 0, size: 15 })),
+    );
   };
 
   const getStatusChipColor = (status: AppointmentStatusEnum) => {
@@ -93,7 +93,7 @@ const AppointmentsNutritionistPage = () => {
     }
   };
 
-  const mapStatusName = (status: AppointmentStatusEnum) => {
+  const mapStatusName = (status?: AppointmentStatusEnum) => {
     switch (status) {
       case AppointmentStatus.ESPERANDO_CONFIRMACAO:
         return 'ESPERANDO CONFIRMAÇÃO';
@@ -113,14 +113,13 @@ const AppointmentsNutritionistPage = () => {
   };
 
   const renderAppointmentsList = () => {
-    if (nutritionistAppointmentsStatus === 'loading' || appointmentsStatus === 'loading') {
-      return (
-        <Box sx={{ display: 'flex', justifyContent: 'center', my: 4 }}>
-          <CircularProgress />
-        </Box>
-      );
+    if (status === 'loading' && !appointmentsPage?.content?.length) {
+      return renderLoadingSkeleton();
     }
-    if (nutritionistAppointmentsStatus === 'succeeded' && nutritionistAppointments.length === 0) {
+    if (
+      status === 'succeeded' &&
+      (appointmentsPage === null || appointmentsPage?.content?.length === 0)
+    ) {
       return (
         <Typography sx={{ my: 4, textAlign: 'center' }}>
           Você ainda não possui consultas agendadas.
@@ -128,58 +127,74 @@ const AppointmentsNutritionistPage = () => {
       );
     }
     return (
-      <TableContainer component={Paper} sx={{ mt: 3 }}>
-        <Table aria-label="tabela de agendamentos">
-          <TableHead>
-            <TableRow
-              sx={{
-                '& .MuiTableCell-root': { fontWeight: 'bold' },
-                backgroundColor: 'lightgrey',
-              }}
-            >
-              <TableCell>Modalidade</TableCell>
-              <TableCell>Paciente</TableCell>
-              <TableCell>Data e Hora</TableCell>
-              <TableCell>Local</TableCell>
-              <TableCell align="center">Status</TableCell>
-              <TableCell align="center">Ações</TableCell>
-            </TableRow>
-          </TableHead>
-          <TableBody>
-            {nutritionistAppointments.map((appt) => (
-              <TableRow key={appt.id}>
-                <TableCell>{appt.isRemote ? 'TELECONSULTA' : 'PRESENCIAL'}</TableCell>
-                <TableCell>{appt.patient.name}</TableCell>
-                <TableCell>
-                  <Typography variant="body2" sx={{ fontWeight: 500 }}>
-                    {(() => {
-                      const dateString = dayjs(appt.startTime).format(
-                        'dddd, D [de] MMMM [de] YYYY',
-                      );
-                      return dateString.charAt(0).toUpperCase() + dateString.slice(1);
-                    })()}
-                  </Typography>
-
-                  <Typography variant="caption" color="text.secondary">
-                    {`${dayjs(appt.startTime).format('HH:mm')} - ${dayjs(appt.startTime)
-                      .add(appt.durationMinutes, 'minute')
-                      .format('HH:mm')}`}
-                  </Typography>
-                </TableCell>
-                <TableCell>{appt.address}</TableCell>
-                <TableCell align="center">
-                  <Chip
-                    label={mapStatusName(appt.status)}
-                    color={getStatusChipColor(appt.status)}
-                    size="small"
-                  />
-                </TableCell>
-                <TableCell align="center">{renderActionsCell(appt)}</TableCell>
+      <>
+        <TableContainer component={Paper} sx={{ mt: 3 }}>
+          <Table aria-label="tabela de agendamentos">
+            <TableHead>
+              <TableRow
+                sx={{
+                  '& .MuiTableCell-root': { fontWeight: 'bold' },
+                  backgroundColor: 'lightgrey',
+                }}
+              >
+                <TableCell>Modalidade</TableCell>
+                <TableCell>Paciente</TableCell>
+                <TableCell>Data e Hora</TableCell>
+                <TableCell>Local</TableCell>
+                <TableCell align="center">Status</TableCell>
+                <TableCell align="center">Ações</TableCell>
               </TableRow>
-            ))}
-          </TableBody>
-        </Table>
-      </TableContainer>
+            </TableHead>
+            <TableBody>
+              {appointmentsPage?.content?.map((appt) => (
+                <TableRow key={appt.id}>
+                  <TableCell>{appt.isRemote ? 'TELECONSULTA' : 'PRESENCIAL'}</TableCell>
+                  <TableCell>{appt.patient?.name}</TableCell>
+                  <TableCell>
+                    <Typography variant="body2" sx={{ fontWeight: 500 }}>
+                      {(() => {
+                        const dateString = dayjs(appt.startTime).format(
+                          'dddd, D [de] MMMM [de] YYYY',
+                        );
+                        return dateString.charAt(0).toUpperCase() + dateString.slice(1);
+                      })()}
+                    </Typography>
+
+                    <Typography variant="caption" color="text.secondary">
+                      {`${dayjs(appt.startTime).format('HH:mm')} - ${dayjs(appt.startTime)
+                        .add(appt.durationMinutes, 'minute')
+                        .format('HH:mm')}`}
+                    </Typography>
+                  </TableCell>
+                  <TableCell>{appt.location?.address}</TableCell>
+                  <TableCell align="center">
+                    <Chip
+                      label={mapStatusName(appt.status)}
+                      color={getStatusChipColor(appt.status ?? 'AGENDADO')}
+                      size="small"
+                    />
+                  </TableCell>
+                  <TableCell align="center">{renderActionsCell(appt)}</TableCell>
+                </TableRow>
+              ))}
+            </TableBody>
+          </Table>
+        </TableContainer>
+
+        <Box sx={{ display: 'flex', justifyContent: 'center', py: 2 }}>
+          {status === 'loading' ? (
+            <CircularProgress />
+          ) : (
+            !appointmentsPage?.last &&
+            appointmentsPage?.content?.length &&
+            appointmentsPage?.content?.length > 0 && (
+              <Button variant="text" onClick={handleLoadMore}>
+                Carregar mais
+              </Button>
+            )
+          )}
+        </Box>
+      </>
     );
   };
 
@@ -243,7 +258,7 @@ const AppointmentsNutritionistPage = () => {
         }}
       >
         <Typography variant="h4" component="h1">
-          Meus Agendamentos
+          Últimos Agendamentos
         </Typography>
         <Box sx={{ display: 'flex', gap: 2 }}>
           <Button
@@ -262,5 +277,58 @@ const AppointmentsNutritionistPage = () => {
     </Container>
   );
 };
+
+const renderLoadingSkeleton = () => (
+  <TableContainer component={Paper} sx={{ mt: 3 }}>
+    <Table aria-label="carregando agendamentos">
+      <TableHead>
+        <TableRow
+          sx={{
+            '& .MuiTableCell-root': { fontWeight: 'bold' },
+            backgroundColor: 'grey.100',
+          }}
+        >
+          <TableCell>Modalidade</TableCell>
+          <TableCell>Paciente</TableCell>
+          <TableCell>Data e Hora</TableCell>
+          <TableCell>Local</TableCell>
+          <TableCell align="center">Status</TableCell>
+          <TableCell align="center">Ações</TableCell>
+        </TableRow>
+      </TableHead>
+      <TableBody>
+        {/* Cria 5 linhas de esqueleto como placeholder */}
+        {Array.from({ length: 5 }).map((_, index) => (
+          <TableRow key={index}>
+            <TableCell>
+              <Skeleton variant="text" width="90%" />
+            </TableCell>
+            <TableCell>
+              <Skeleton variant="text" width="80%" />
+            </TableCell>
+            <TableCell>
+              <Skeleton variant="text" />
+              <Skeleton variant="text" width="70%" />
+            </TableCell>
+            <TableCell>
+              <Skeleton variant="text" width="90%" />
+            </TableCell>
+            <TableCell align="center">
+              <Skeleton
+                variant="rectangular"
+                width={100}
+                height={24}
+                sx={{ borderRadius: '16px', mx: 'auto' }}
+              />
+            </TableCell>
+            <TableCell align="center">
+              <Skeleton variant="rectangular" width={120} height={36} />
+            </TableCell>
+          </TableRow>
+        ))}
+      </TableBody>
+    </Table>
+  </TableContainer>
+);
 
 export default AppointmentsNutritionistPage;

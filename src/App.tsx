@@ -104,6 +104,14 @@ function App() {
               </PrivateRoute>
             }
           />
+          {/* <Route
+            path="/perfil/paciente"
+            element={
+              <PrivateRoute allowedRoles={[UserRole.ROLE_NUTRITIONIST]}>
+                <Pacient />
+              </PrivateRoute>
+            }
+          /> */}
           <Route
             path="/agendamentos/paciente"
             element={

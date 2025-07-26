@@ -1,13 +1,18 @@
 import type { NutritionistAppointment } from '../types/nutritionistsAppointment';
+import { type PaginatedResponse } from '../types/pagination';
 import type { CalendarPatientAppointment } from '../types/schedule';
 import { apiClient } from './config/axiosConfig';
 
-export const fetchPatientAppointmentsApi = () => {
-  return apiClient.get<CalendarPatientAppointment[]>('/patients/me/appointments');
+export const fetchPatientAppointmentsApi = (page: number, size: number) => {
+  return apiClient.get<PaginatedResponse<CalendarPatientAppointment>>(
+    `/patients/me/appointments?page=${page}&size=${size}`,
+  );
 };
 
-export const fetchNutritionistAppointmentsApi = () => {
-  return apiClient.get<NutritionistAppointment[]>('/nutritionists/me/appointments');
+export const fetchNutritionistAppointmentsApi = (page: number, size: number) => {
+  return apiClient.get<PaginatedResponse<NutritionistAppointment>>(
+    `/nutritionists/me/appointments?page=${page}&size=${size}`,
+  );
 };
 
 export const cancelAppointmentByNutritionistApi = (appointmentId: string) => {
