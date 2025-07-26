@@ -20,11 +20,18 @@ export const cancelAppointmentByNutritionistApi = (appointmentId: string) => {
 };
 
 export const requestAppointmentConfirmationApi = (appointmentId: string) => {
-  return apiClient.post(`/appointments/${appointmentId}/request-confirmation`);
+  return apiClient.patch(`/appointments/${appointmentId}/request-confirmation`);
 };
 
 export const confirmAppointmentApi = (appointmentId: string) => {
-  return apiClient.post(`/appointments/${appointmentId}/confirm`);
+  return apiClient.patch(`/appointments/${appointmentId}/confirm`);
+};
+
+export const finishAppointmentApi = (
+  appointmentId: string,
+  { attended }: { attended: boolean },
+) => {
+  return apiClient.patch(`/appointments/${appointmentId}/finish?attended=${attended}`);
 };
 
 export const cancelAppointmentByPatientApi = (appointmentId: string) => {

@@ -6,6 +6,7 @@ import {
   cancelAppointmentByNutritionistApi,
   requestAppointmentConfirmationApi,
   fetchNutritionistAppointmentsApi,
+  finishAppointmentApi,
 } from '../../../services/appointmentService';
 import type { CalendarNutritionistAppointment } from '../../../types/schedule';
 import type { NutritionistAppointment } from '../../../types/nutritionistsAppointment';
@@ -70,6 +71,23 @@ export const requestAppointmentConfirmation = createAsyncThunk<
     } catch (error) {
       const axiosError = error as AxiosError<{ message: string }>;
       return rejectWithValue(axiosError.response?.data?.message || 'Erro ao pedir confirmação.');
+    }
+  },
+);
+
+export const finishAppointment = createAsyncThunk(
+  'nutritionist/appointments/finish',
+  async (
+    { appointmentId, attended }: { appointmentId: string; attended: boolean },
+    { rejectWithValue },
+  ) => {
+    try {
+      await finishAppointmentApi(appointmentId, { attended });
+    } catch (error) {
+      const axiosError = error as AxiosError<{ message: string }>;
+      return rejectWithValue(
+        axiosError.response?.data?.message || 'Erro ao finalizar confirmação.',
+      );
     }
   },
 );
