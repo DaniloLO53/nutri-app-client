@@ -19,6 +19,7 @@ import {
   Chip,
   Divider,
   Skeleton,
+  CircularProgress,
 } from '@mui/material';
 import EventAvailableIcon from '@mui/icons-material/EventAvailable';
 
@@ -47,8 +48,19 @@ const AppointmentsNutritionistPage = () => {
   }, [error, dispatch]);
 
   useEffect(() => {
-    dispatch(fetchAppointments({ page: 0, size: 15 }));
-  }, [dispatch]);
+    // Carrega a página 0 apenas se não houver dados
+    if (!appointmentsPage) {
+      dispatch(fetchAppointments({ page: 0, size: 15 }));
+    }
+  }, [dispatch, appointmentsPage]);
+
+  const handleLoadMore = () => {
+    // Apenas busca mais se não estiver carregando e se não for a última página
+    if (status !== 'loading' && !appointmentsPage?.last) {
+      const nextPage = (appointmentsPage?.number ?? 0) + 1;
+      dispatch(fetchAppointments({ page: nextPage, size: 15 }));
+    }
+  };
 
   const handleRequestConfirmation = (appointmentId: string) => {
     console.log('Pedir confirmação para a consulta:', appointmentId);
@@ -101,7 +113,7 @@ const AppointmentsNutritionistPage = () => {
   };
 
   const renderAppointmentsList = () => {
-    if (status === 'loading') {
+    if (status === 'loading' && !appointmentsPage?.content?.length) {
       return renderLoadingSkeleton();
     }
     if (
@@ -115,58 +127,74 @@ const AppointmentsNutritionistPage = () => {
       );
     }
     return (
-      <TableContainer component={Paper} sx={{ mt: 3 }}>
-        <Table aria-label="tabela de agendamentos">
-          <TableHead>
-            <TableRow
-              sx={{
-                '& .MuiTableCell-root': { fontWeight: 'bold' },
-                backgroundColor: 'lightgrey',
-              }}
-            >
-              <TableCell>Modalidade</TableCell>
-              <TableCell>Paciente</TableCell>
-              <TableCell>Data e Hora</TableCell>
-              <TableCell>Local</TableCell>
-              <TableCell align="center">Status</TableCell>
-              <TableCell align="center">Ações</TableCell>
-            </TableRow>
-          </TableHead>
-          <TableBody>
-            {appointmentsPage?.content?.map((appt) => (
-              <TableRow key={appt.id}>
-                <TableCell>{appt.isRemote ? 'TELECONSULTA' : 'PRESENCIAL'}</TableCell>
-                <TableCell>{appt.patient?.name}</TableCell>
-                <TableCell>
-                  <Typography variant="body2" sx={{ fontWeight: 500 }}>
-                    {(() => {
-                      const dateString = dayjs(appt.startTime).format(
-                        'dddd, D [de] MMMM [de] YYYY',
-                      );
-                      return dateString.charAt(0).toUpperCase() + dateString.slice(1);
-                    })()}
-                  </Typography>
-
-                  <Typography variant="caption" color="text.secondary">
-                    {`${dayjs(appt.startTime).format('HH:mm')} - ${dayjs(appt.startTime)
-                      .add(appt.durationMinutes, 'minute')
-                      .format('HH:mm')}`}
-                  </Typography>
-                </TableCell>
-                <TableCell>{appt.location?.address}</TableCell>
-                <TableCell align="center">
-                  <Chip
-                    label={mapStatusName(appt.status)}
-                    color={getStatusChipColor(appt.status ?? 'AGENDADO')}
-                    size="small"
-                  />
-                </TableCell>
-                <TableCell align="center">{renderActionsCell(appt)}</TableCell>
+      <>
+        <TableContainer component={Paper} sx={{ mt: 3 }}>
+          <Table aria-label="tabela de agendamentos">
+            <TableHead>
+              <TableRow
+                sx={{
+                  '& .MuiTableCell-root': { fontWeight: 'bold' },
+                  backgroundColor: 'lightgrey',
+                }}
+              >
+                <TableCell>Modalidade</TableCell>
+                <TableCell>Paciente</TableCell>
+                <TableCell>Data e Hora</TableCell>
+                <TableCell>Local</TableCell>
+                <TableCell align="center">Status</TableCell>
+                <TableCell align="center">Ações</TableCell>
               </TableRow>
-            ))}
-          </TableBody>
-        </Table>
-      </TableContainer>
+            </TableHead>
+            <TableBody>
+              {appointmentsPage?.content?.map((appt) => (
+                <TableRow key={appt.id}>
+                  <TableCell>{appt.isRemote ? 'TELECONSULTA' : 'PRESENCIAL'}</TableCell>
+                  <TableCell>{appt.patient?.name}</TableCell>
+                  <TableCell>
+                    <Typography variant="body2" sx={{ fontWeight: 500 }}>
+                      {(() => {
+                        const dateString = dayjs(appt.startTime).format(
+                          'dddd, D [de] MMMM [de] YYYY',
+                        );
+                        return dateString.charAt(0).toUpperCase() + dateString.slice(1);
+                      })()}
+                    </Typography>
+
+                    <Typography variant="caption" color="text.secondary">
+                      {`${dayjs(appt.startTime).format('HH:mm')} - ${dayjs(appt.startTime)
+                        .add(appt.durationMinutes, 'minute')
+                        .format('HH:mm')}`}
+                    </Typography>
+                  </TableCell>
+                  <TableCell>{appt.location?.address}</TableCell>
+                  <TableCell align="center">
+                    <Chip
+                      label={mapStatusName(appt.status)}
+                      color={getStatusChipColor(appt.status ?? 'AGENDADO')}
+                      size="small"
+                    />
+                  </TableCell>
+                  <TableCell align="center">{renderActionsCell(appt)}</TableCell>
+                </TableRow>
+              ))}
+            </TableBody>
+          </Table>
+        </TableContainer>
+
+        <Box sx={{ display: 'flex', justifyContent: 'center', py: 2 }}>
+          {status === 'loading' ? (
+            <CircularProgress />
+          ) : (
+            !appointmentsPage?.last &&
+            appointmentsPage?.content?.length &&
+            appointmentsPage?.content?.length > 0 && (
+              <Button variant="text" onClick={handleLoadMore}>
+                Carregar mais
+              </Button>
+            )
+          )}
+        </Box>
+      </>
     );
   };
 
