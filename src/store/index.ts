@@ -1,4 +1,4 @@
-import { configureStore } from '@reduxjs/toolkit';
+import { combineReducers, configureStore, type UnknownAction } from '@reduxjs/toolkit';
 import registerReducer from './slices/auth/registerPatientSlice';
 import signInUserReducer from './slices/auth/signInSlice';
 import appointmentFromNutritionistReducer from './slices/appointments/appointmentFromNutritionistSlice';
@@ -10,22 +10,41 @@ import patientSearchReducer from './slices/patients/patientSearchSlice';
 import locationsReducer from './slices/locations/locationSlice';
 import notificationReducer from './slices/notifications/notificationsSlice';
 
-export const store = configureStore({
-  reducer: {
-    // A chave 'register' aqui define como o estado será chamado no seletor global
-    // Ex: useSelector((state) => state.register.loading)
-    register: registerReducer,
-    signIn: signInUserReducer,
-    appointmentFromNutritionist: appointmentFromNutritionistReducer,
-    appointmentFromPatient: appointmentFromPatientReducer,
-    schedule: scheduleReducer,
-    availableNutritionistSearch: availableNutritionistSearchReducer,
-    nutritionistProfile: nutritionistProfileReducer,
-    patientSearch: patientSearchReducer,
-    locations: locationsReducer,
-    notification: notificationReducer,
-  },
+import { signOutUser } from './slices/auth/authThunk';
+
+const appReducer = combineReducers({
+  register: registerReducer,
+  signIn: signInUserReducer,
+  appointmentFromNutritionist: appointmentFromNutritionistReducer,
+  appointmentFromPatient: appointmentFromPatientReducer,
+  schedule: scheduleReducer,
+  availableNutritionistSearch: availableNutritionistSearchReducer,
+  nutritionistProfile: nutritionistProfileReducer,
+  patientSearch: patientSearchReducer,
+  locations: locationsReducer,
+  notification: notificationReducer,
 });
 
-export type RootState = ReturnType<typeof store.getState>;
+export type RootState = ReturnType<typeof appReducer>;
+
+// 4. Crie o "meta-reducer" que lida com o reset do estado
+const rootReducer = (state: RootState | undefined, action: UnknownAction): RootState => {
+  // Se a ação for de logout bem-sucedido, reseta o estado
+  if (action.type === signOutUser.fulfilled.type) {
+    // Passar 'undefined' para o reducer o força a retornar seu estado inicial
+    return appReducer(undefined, action);
+  }
+
+  // Para qualquer outra ação, delega para o reducer combinado
+  return appReducer(state, action);
+};
+
+export const store = configureStore({
+  reducer: rootReducer,
+  middleware: (getDefaultMiddleware) =>
+    getDefaultMiddleware({
+      serializableCheck: false,
+    }),
+});
+
 export type AppDispatch = typeof store.dispatch;
