@@ -35,6 +35,7 @@ export type AuthenticatedUser = {
   role: string;
   firstName: string;
   lastName: string;
+  token?: string | null;
 };
 
 export type UserWithoutId = Omit<User, 'id'>;

@@ -35,14 +35,11 @@ const signInUserSlice = createSlice({
         state.error = null;
         state.signInSuccess = false;
       })
-      .addCase(
-        signInUser.fulfilled,
-        (state, action: PayloadAction<AuthenticatedUser>) => {
-          state.loading = false;
-          state.userInfo = action.payload;
-          state.signInSuccess = true;
-        },
-      )
+      .addCase(signInUser.fulfilled, (state, action: PayloadAction<AuthenticatedUser>) => {
+        state.loading = false;
+        state.userInfo = action.payload;
+        state.signInSuccess = true;
+      })
       .addCase(signInUser.rejected, (state, action) => {
         state.loading = false;
         if (action.payload) {
