@@ -23,6 +23,7 @@ import {
   DialogContentText,
   Divider,
   Skeleton,
+  CircularProgress,
 } from '@mui/material';
 
 import dayjs from 'dayjs';
@@ -35,7 +36,10 @@ import {
   cancelAppointment,
   confirmAppointment,
   fetchAppointments,
+  clearError as appointmentsClearError,
 } from '../store/slices/appointments/appointmentFromPatientSlice';
+import { toast } from 'react-toastify';
+import EventAvailableIcon from '@mui/icons-material/EventAvailable';
 
 const AppointmentsPatientPage = () => {
   const dispatch = useDispatch<AppDispatch>();
@@ -49,8 +53,25 @@ const AppointmentsPatientPage = () => {
   const [appointmentToConfirmId, setAppointmentToConfirmId] = useState<string | null>(null);
 
   useEffect(() => {
-    dispatch(fetchAppointments({ page: 0, size: 15 }));
-  }, [dispatch]);
+    if (error) {
+      toast.error(error);
+      dispatch(appointmentsClearError());
+    }
+  }, [error, dispatch]);
+
+  useEffect(() => {
+    // Carrega a página 0 apenas se não houver dados no estado
+    if (!appointmentsPage) {
+      dispatch(fetchAppointments({ page: 0, size: 15 }));
+    }
+  }, [dispatch, appointmentsPage]);
+
+  const handleLoadMore = () => {
+    if (status !== 'loading' && !appointmentsPage?.last) {
+      const nextPage = (appointmentsPage?.number ?? 0) + 1;
+      dispatch(fetchAppointments({ page: nextPage, size: 15 }));
+    }
+  };
 
   const handleCancelAppointment = (appointmentId: string) => {
     setAppointmentToCancelId(appointmentId); // Guarda o ID da consulta
@@ -176,7 +197,9 @@ const AppointmentsPatientPage = () => {
   };
 
   const renderContent = () => {
-    if (status === 'loading') return renderLoadingSkeleton();
+    if (status === 'loading' && !appointmentsPage?.content?.length) {
+      return renderLoadingSkeleton();
+    }
 
     if (status === 'failed') {
       return (
@@ -197,12 +220,12 @@ const AppointmentsPatientPage = () => {
             <Fab
               variant="extended"
               color="primary"
-              aria-label="criar nova consulta"
+              aria-label="agendar consulta"
               component={RouterLink}
               to="/agendamentos/novo"
             >
               <AddIcon sx={{ mr: 1 }} />
-              Criar Nova Consulta
+              Agendar Consulta
             </Fab>
           </Box>
         </>
@@ -263,17 +286,19 @@ const AppointmentsPatientPage = () => {
             </TableBody>
           </Table>
         </TableContainer>
-        <Box sx={{ display: 'flex', justifyContent: 'center', mt: 4 }}>
-          <Fab
-            variant="extended"
-            color="primary"
-            aria-label="agendar nova consulta"
-            component={RouterLink}
-            to="/agendamentos/novo"
-          >
-            <AddIcon sx={{ mr: 1 }} />
-            Agendar Nova Consulta
-          </Fab>
+
+        <Box sx={{ display: 'flex', justifyContent: 'center', py: 2 }}>
+          {status === 'loading' ? (
+            <CircularProgress />
+          ) : (
+            !appointmentsPage?.last &&
+            appointmentsPage?.content?.length &&
+            appointmentsPage?.content?.length > 0 && (
+              <Button variant="text" onClick={handleLoadMore}>
+                Carregar mais
+              </Button>
+            )
+          )}
         </Box>
       </>
     );
@@ -281,9 +306,29 @@ const AppointmentsPatientPage = () => {
 
   return (
     <Container maxWidth="lg" sx={{ mt: 4, mb: 4 }}>
-      <Typography variant="h4" component="h1" gutterBottom>
-        Meus Agendamentos
-      </Typography>
+      <Box
+        sx={{
+          display: 'flex',
+          justifyContent: 'space-between',
+          alignItems: 'center',
+          py: 3,
+        }}
+      >
+        <Typography variant="h4" component="h1">
+          Últimos Agendamentos
+        </Typography>
+        <Box sx={{ display: 'flex', gap: 2 }}>
+          <Button
+            variant="outlined"
+            startIcon={<EventAvailableIcon />}
+            component={RouterLink}
+            to="/agendamentos/novo" // Rota para criar novos horários
+          >
+            Agendar Consulta
+          </Button>
+        </Box>
+      </Box>
+
       <Divider />
       {renderContent()}
 

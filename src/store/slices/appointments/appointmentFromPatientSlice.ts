@@ -115,7 +115,17 @@ const nutritionistAppointmentSlice = createSlice({
       })
       .addCase(fetchAppointments.fulfilled, (state, action) => {
         state.status = 'succeeded';
-        state.appointmentsPage = action.payload;
+        // Se já houver consultas e não for a primeira página, anexe os novos resultados
+        if (state.appointmentsPage && action.payload.number > 0) {
+          state.appointmentsPage.content.push(...action.payload.content);
+          // Atualiza os metadados de paginação com os da última requisição
+          state.appointmentsPage.last = action.payload.last;
+          state.appointmentsPage.number = action.payload.number;
+          state.appointmentsPage.totalPages = action.payload.totalPages;
+        } else {
+          // Se for a primeira carga, apenas define o estado
+          state.appointmentsPage = action.payload;
+        }
       })
       .addCase(fetchAppointments.rejected, (state, action) => {
         state.status = 'failed';
