@@ -43,7 +43,11 @@ import { fetchLocations } from '../store/slices/locations/locationSlice';
 import { green } from '@mui/material/colors';
 import { AppointmentStatus } from '../types/appointment';
 import { toast } from 'react-toastify';
-import { cancelAppointment } from '../store/slices/appointments/appointmentFromNutritionistSlice';
+import {
+  cancelAppointment,
+  finishAppointment,
+  requestAppointmentConfirmation,
+} from '../store/slices/appointments/appointmentFromNutritionistSlice';
 import CalendarGridSkeleton from '../components/CalendarGridSkeleton';
 
 const DURATIONS = [15, 30, 45, 60];
@@ -68,6 +72,10 @@ const ScheduleCreateNutritionistPage = () => {
     useState(false);
 
   const [isAppointmentCreateOpen, setIsAppointmentCreateOpen] = useState(false);
+
+  const [isFinishedDialogOpen, setIsFinishedDialogOpen] = useState(false);
+
+  const [dialogActionType, setDialogActionType] = useState<'confirm' | 'finish' | null>(null);
 
   const [selectedSchedule, setSelectedSchedule] = useState<CalendarSchedule | null>(null);
   const [selectedSlot, setSelectedSlot] = useState<Dayjs | null>(null);
@@ -102,6 +110,17 @@ const ScheduleCreateNutritionistPage = () => {
     setSelectedLocationId('');
   };
 
+  const handleRequestConfirmation = () => {
+    if (!selectedAppointment) return;
+
+    dispatch(requestAppointmentConfirmation({ appointmentId: selectedAppointment.id })).then(() => {
+      toast.info('Pedido de confirmação enviado ao paciente.');
+      dispatch(fetchOwnSchedule({ startDate, endDate }));
+    });
+
+    handleCloseDialogs();
+  };
+
   useEffect(() => {
     dispatch(fetchLocations());
   }, [dispatch]);
@@ -110,6 +129,7 @@ const ScheduleCreateNutritionistPage = () => {
     setIsCreateDialogOpen(false);
     setIsScheduleActionDialogOpen(false);
     setIsAppointmentCreateOpen(false);
+    setIsFinishedDialogOpen(false);
     setIsAppointmentActionDialogOpen(false);
     setIsDeleteCanceledAppointmentDialogOpen(false);
     setIsAppointmentDetailOpen(false);
@@ -132,21 +152,41 @@ const ScheduleCreateNutritionistPage = () => {
       const appointment = event as CalendarNutritionistAppointment;
       setSelectedAppointment(appointment);
 
-      // Lógica condicional baseada no status
       if (
         appointment.status === AppointmentStatus.AGENDADO ||
-        appointment.status === AppointmentStatus.CONFIRMADO
+        appointment.status === AppointmentStatus.CONFIRMADO ||
+        appointment.status === AppointmentStatus.ESPERANDO_CONFIRMACAO
       ) {
-        // Abre o diálogo de ações para consultas ativas
+        // Define o tipo de ação com base no status antes de abrir o diálogo
+        if (appointment.status === AppointmentStatus.AGENDADO) {
+          setDialogActionType('confirm');
+        } else {
+          setDialogActionType('finish');
+        }
         setIsAppointmentActionDialogOpen(true);
       } else if (appointment.status === AppointmentStatus.CANCELADO) {
-        // Abre o diálogo de recriar/excluir para consultas canceladas
         setIsDeleteCanceledAppointmentDialogOpen(true);
       } else {
-        // Para outros status (CONCLUIDO, etc.), abre os detalhes diretamente
         setIsAppointmentDetailOpen(true);
       }
     }
+  };
+
+  const handleOpenFinishDialog = () => {
+    setIsAppointmentActionDialogOpen(false);
+    setIsFinishedDialogOpen(true);
+  };
+
+  const handleConfirmFinalizeAppointment = (attended: boolean) => {
+    if (!selectedAppointment) return;
+
+    // Despacha a nova ação (thunk) que você precisará criar
+    dispatch(finishAppointment({ appointmentId: selectedAppointment.id, attended })).then(() => {
+      toast.success('Consulta finalizada com sucesso!');
+      dispatch(fetchOwnSchedule({ startDate, endDate }));
+    });
+
+    handleCloseDialogs();
   };
 
   const handleConfirmCancelAppointment = () => {
@@ -358,6 +398,7 @@ const ScheduleCreateNutritionistPage = () => {
           </Box>
         </DialogActions>
       </Dialog>
+
       <Dialog open={isAppointmentActionDialogOpen} onClose={handleCloseDialogs}>
         <DialogTitle>Ações para Consulta</DialogTitle>
         <DialogContent>
@@ -367,20 +408,29 @@ const ScheduleCreateNutritionistPage = () => {
           </DialogContentText>
         </DialogContent>
         <DialogActions sx={{ p: 2, justifyContent: 'space-between' }}>
-          {/* ✅ NOVO BOTÃO DE VER INFORMAÇÕES */}
-          <Button onClick={handleViewAppointmentDetails} variant="outlined">
-            Ver Informações
+          <Button onClick={handleCloseDialogs} color="secondary">
+            Voltar
           </Button>
-          <Box>
-            <Button onClick={handleCloseDialogs} color="secondary">
-              Manter Consulta
+          <Box sx={{ display: 'flex', gap: 1 }}>
+            <Button onClick={handleViewAppointmentDetails} variant="outlined">
+              Detalhes
             </Button>
+            {dialogActionType === 'confirm' ? (
+              <Button onClick={handleRequestConfirmation} variant="contained" color="primary">
+                Pedir Confirmação
+              </Button>
+            ) : (
+              <Button onClick={handleOpenFinishDialog} variant="contained" color="primary">
+                Finalizar
+              </Button>
+            )}
             <Button onClick={handleConfirmCancelAppointment} variant="contained" color="error">
-              Cancelar Consulta
+              Cancelar
             </Button>
           </Box>
         </DialogActions>
       </Dialog>
+
       <Dialog open={isAppointmentDetailOpen} onClose={handleCloseDialogs} fullWidth maxWidth="xs">
         <DialogTitle
           sx={{
@@ -465,6 +515,28 @@ const ScheduleCreateNutritionistPage = () => {
               Nada, manter registro
             </Button>
           </Box>
+        </DialogActions>
+      </Dialog>
+
+      <Dialog open={isFinishedDialogOpen} onClose={handleCloseDialogs}>
+        <DialogTitle>Finalizar Consulta</DialogTitle>
+        <DialogContent>
+          <DialogContentText>
+            O paciente <strong>{selectedAppointment?.patient?.name}</strong> compareceu à consulta?
+          </DialogContentText>
+        </DialogContent>
+        <DialogActions sx={{ p: 2 }}>
+          <Button onClick={() => handleConfirmFinalizeAppointment(false)} color="error">
+            Não Compareceu
+          </Button>
+          <Button
+            onClick={() => handleConfirmFinalizeAppointment(true)}
+            variant="contained"
+            color="success"
+            autoFocus
+          >
+            Sim, Compareceu
+          </Button>
         </DialogActions>
       </Dialog>
       <AppointmentCreateNutritionist
