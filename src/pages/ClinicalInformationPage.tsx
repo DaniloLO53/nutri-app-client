@@ -1,5 +1,5 @@
 import { useState, useEffect, type SyntheticEvent } from 'react';
-import { useDispatch } from 'react-redux';
+import { useDispatch, useSelector } from 'react-redux';
 import { useParams } from 'react-router-dom';
 
 // Componentes do Material-UI
@@ -25,13 +25,14 @@ import {
   DialogContent,
   DialogActions,
   type SelectChangeEvent,
+  CircularProgress,
 } from '@mui/material';
 import SaveIcon from '@mui/icons-material/Save';
 import DeleteIcon from '@mui/icons-material/Delete';
 import SettingsIcon from '@mui/icons-material/Settings';
 
 // Tipos e Ações (que você irá criar)
-import type { AppDispatch } from '../store';
+import type { AppDispatch, RootState } from '../store';
 import type {
   ClinicalInformationForm,
   FormAllergen,
@@ -42,11 +43,12 @@ import type {
   FormSymptom,
 } from '../types/clinicalInformation';
 // Exemplo de Thunks que você precisaria criar:
-// import {
-//   fetchClinicalInformation,
-//   saveClinicalInformation,
-// } from '../store/slices/clinicalInformationSlice';
-// import { fetchClinicalInformationMasterData } from '../store/slices/clinicalInformationMasterData'; // Thunk para buscar sintomas, doenças, etc.
+import {
+  fetchClinicalInformation,
+  saveClinicalInformation,
+} from '../store/slices/clinicalInformation/clinicalInformationSlice';
+// import { fetchClinicalInformationMasterData } from '../store/slices/clinicalInformationMasterDataSlice'; // Thunk para buscar sintomas, doenças, etc.
+import { toast } from 'react-toastify';
 
 // Componente para o painel de abas
 const TabPanel = (props: { children?: React.ReactNode; index: number; value: number }) => {
@@ -93,7 +95,9 @@ const ClinicalInformationPage = () => {
   const [formData, setFormData] = useState<Partial<ClinicalInformationForm>>({}); // Usamos Partial para dados que chegam depois
 
   // Seletores do Redux (exemplo)
-  // const { information, status } = useSelector((state: RootState) => state.clinicalInformation);
+  const { clinicalInformation, status: clinicalInformationStatus } = useSelector(
+    (state: RootState) => state.clinicalInformation,
+  );
   // const { symptoms, diseases, medications } = useSelector((state: RootState) => state.masterData);
 
   // Dados mockados para o exemplo
@@ -121,18 +125,18 @@ const ClinicalInformationPage = () => {
   useEffect(() => {
     if (patientId) {
       // Você irá despachar as actions para buscar os dados aqui
-      // dispatch(fetchClinicalInformation(patientId));
+      dispatch(fetchClinicalInformation({ patientId }));
       // dispatch(fetchMasterData()); // Busca todas as listas (sintomas, doenças, etc.)
       console.log('Buscando informações para o paciente:', patientId);
     }
   }, [dispatch, patientId]);
 
   // Efeito para preencher o formulário quando os dados chegam do Redux
-  // useEffect(() => {
-  //   if (information) {
-  //     setFormData(information);
-  //   }
-  // }, [information]);
+  useEffect(() => {
+    if (clinicalInformation) {
+      setFormData(clinicalInformation);
+    }
+  }, [clinicalInformation]);
 
   const handleSymptomsChange = (
     event: SyntheticEvent,
@@ -422,17 +426,21 @@ const ClinicalInformationPage = () => {
   const handleSubmit = (event: React.FormEvent) => {
     event.preventDefault();
     // Você irá despachar a action para salvar os dados aqui
-    // dispatch(saveClinicalInformation({ patientId, data: formData }));
-    console.log('Salvando dados:', formData);
+    if (!patientId) {
+      toast.error('Erro ao salvar informações');
+    } else {
+      dispatch(saveClinicalInformation({ patientId, clinicalInformation: formData }));
+      console.log('Salvando dados:', formData);
+    }
   };
 
-  // if (status === 'loading') {
-  //   return (
-  //     <Box sx={{ display: 'flex', justifyContent: 'center', mt: 10 }}>
-  //       <CircularProgress />
-  //     </Box>
-  //   );
-  // }
+  if (clinicalInformationStatus === 'loading') {
+    return (
+      <Box sx={{ display: 'flex', justifyContent: 'center', mt: 10 }}>
+        <CircularProgress />
+      </Box>
+    );
+  }
 
   return (
     <Container maxWidth="lg" sx={{ my: 4 }}>
