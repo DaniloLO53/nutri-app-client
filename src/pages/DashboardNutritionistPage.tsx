@@ -1,25 +1,23 @@
 import { Container, Typography, Box } from '@mui/material';
 
-import MedicalServicesIcon from '@mui/icons-material/MedicalServices';
-import DashboardCard from '../components/DashboardCard';
+import AssignmentIndIcon from '@mui/icons-material/AssignmentInd';
 import { useSelector } from 'react-redux';
 import { useEffect, useState } from 'react';
 import type { RootState } from '../store';
 import EventNoteIcon from '@mui/icons-material/EventNote';
+import DashboardCard from '../components/DashboardCard';
 
 const dashboardItems = [
   {
-    icon: <MedicalServicesIcon />,
-    title: 'Minhas Receitas',
-    description:
-      'Visualize e gerencie suas receitas médicas ativas e passadas.',
-    path: '/receitas',
+    icon: <AssignmentIndIcon />,
+    title: 'Meus Pacientes',
+    description: 'Visualize as informações sobre seus pacientes.',
+    path: '/pacientes',
   },
   {
     icon: <EventNoteIcon />,
     title: 'Minha Agenda',
-    description:
-      'Veja seus próximos agendamentos, agende novas consultas e abra novos horários',
+    description: 'Veja seus próximos agendamentos, agende novas consultas e abra novos horários',
     path: '/agendamentos/nutricionista',
   },
 ];
