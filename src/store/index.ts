@@ -9,6 +9,8 @@ import scheduleReducer from './slices/schedules/scheduleSlice';
 import patientSearchReducer from './slices/patients/patientSearchSlice';
 import locationsReducer from './slices/locations/locationSlice';
 import notificationReducer from './slices/notifications/notificationsSlice';
+import nutritionistPatientsReducer from './slices/patients/nutritionistPatientsSlice';
+import nutritionistScheduledPatientsReducer from './slices/patients/nutritionistScheduledPatientsSlice';
 
 import { signOutUser } from './slices/auth/authThunk';
 
@@ -23,6 +25,8 @@ const appReducer = combineReducers({
   patientSearch: patientSearchReducer,
   locations: locationsReducer,
   notification: notificationReducer,
+  nutritionistPatients: nutritionistPatientsReducer,
+  nutritionistScheduledPatients: nutritionistScheduledPatientsReducer,
 });
 
 export type RootState = ReturnType<typeof appReducer>;

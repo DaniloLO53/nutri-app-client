@@ -24,6 +24,7 @@ import NutritionistProfilePage from './pages/NutritionistProfilePage';
 import AppointmentsNutritionistPage from './pages/AppointmentsNutritionistPage';
 import ScheduleCreateNutritionistPage from './pages/ScheduleCreateNutritionistPage';
 import ScheduleCreatePatientPage from './pages/ScheduleCreatePatientPage';
+import MyPatientsPage from './pages/MyPatientsPage';
 
 function App() {
   const dispatch = useDispatch<AppDispatch>();
@@ -93,6 +94,14 @@ function App() {
             element={
               <PrivateRoute allowedRoles={[UserRole.ROLE_NUTRITIONIST]}>
                 <DashboardNutritionistPage />
+              </PrivateRoute>
+            }
+          />
+          <Route
+            path="/pacientes"
+            element={
+              <PrivateRoute allowedRoles={[UserRole.ROLE_NUTRITIONIST]}>
+                <MyPatientsPage />
               </PrivateRoute>
             }
           />
