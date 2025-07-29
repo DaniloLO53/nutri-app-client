@@ -77,8 +77,6 @@ Para configurar o ambiente de desenvolvimento local, siga os passos abaixo:
 
 ### 🎨 Visualização
 
-_(Esta seção é um placeholder. Adicione screenshots da sua aplicação aqui para torná-la ainda mais atrativa!)_
-
 |                      Agenda                      |
 | :----------------------------------------------: |
 | <img src="public/assets/agenda.png" width="500"> |
