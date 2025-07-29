@@ -232,6 +232,9 @@ const ClinicalInformationPage = () => {
     newValue: { medicationId: string; name: string }[],
   ) => {
     // Mapeia os novos valores selecionados para o formato do nosso estado (FormSymptom)
+    console.log({ newValue });
+    console.log({ medications });
+    console.log(formData.medications);
     const newMedications: FormMedication[] = newValue.map((option) => {
       // Tenta encontrar o sintoma existente no estado para não perder os detalhes já preenchidos
       const existingMedication = formData.medications?.find(
@@ -239,6 +242,8 @@ const ClinicalInformationPage = () => {
       );
       return existingMedication || { medicationId: option.medicationId, name: option.name };
     });
+    console.log({ newMedications });
+    console.log({ ...formData, medications: newMedications });
 
     setFormData((prev) => ({ ...prev, medications: newMedications }));
   };
@@ -403,6 +408,7 @@ const ClinicalInformationPage = () => {
 
   const handleInputChange = (event: React.ChangeEvent<HTMLInputElement>) => {
     const { name, value } = event.target;
+    console.log({ value });
     setFormData((prev) => ({ ...prev, [name]: value }));
   };
 
@@ -972,7 +978,7 @@ const ClinicalInformationPage = () => {
                       <Grid container spacing={2}>
                         <Grid>
                           <TextField
-                            label="Membro da família"
+                            label="Dosagem"
                             multiline
                             rows={2}
                             value={medication.dosage || ''}
@@ -988,8 +994,8 @@ const ClinicalInformationPage = () => {
                         </Grid>
                         <Grid>
                           <TextField
-                            label="Membro da família"
-                            multiline
+                            label="Notas"
+                            type="text"
                             rows={2}
                             value={medication.notes || ''}
                             onChange={(e) =>
@@ -1033,53 +1039,57 @@ const ClinicalInformationPage = () => {
               </Grid>
 
               {/* --- Renderização dos Detalhes de Cada Sintoma Selecionado --- */}
-              {formData.foodPreferencesAndAversions?.map((foodPreferencesAndAversion) => (
-                <Grid key={foodPreferencesAndAversion.foodId}>
-                  <Box>
-                    <Paper variant="outlined" sx={{ p: 2 }}>
-                      <Box
-                        sx={{
-                          display: 'flex',
-                          justifyContent: 'space-between',
-                          alignItems: 'center',
-                          mb: 2,
-                        }}
+              {formData.foodPreferencesAndAversions?.map((foodPreference) => (
+                // ✅ CORREÇÃO: Envolvido em um Grid item para layout correto
+                <Grid size={12} key={foodPreference.foodId}>
+                  <Paper variant="outlined" sx={{ p: 2 }}>
+                    <Box
+                      sx={{
+                        display: 'flex',
+                        justifyContent: 'space-between',
+                        alignItems: 'center',
+                        mb: 2,
+                      }}
+                    >
+                      <Typography variant="subtitle1" sx={{ fontWeight: 500 }}>
+                        {foodPreference.name}
+                      </Typography>
+                      <IconButton
+                        onClick={() =>
+                          handleRemoveFoodPreferencesAndAversions(foodPreference.foodId)
+                        }
+                        size="small"
+                        aria-label={`Remover ${foodPreference.name}`}
                       >
-                        <Typography variant="subtitle1" sx={{ fontWeight: 500 }}>
-                          {foodPreferencesAndAversion.name}
-                        </Typography>
-                        <IconButton
-                          onClick={() =>
-                            handleRemoveFoodPreferencesAndAversions(
-                              foodPreferencesAndAversion.foodId,
-                            )
-                          }
-                          size="small"
-                          aria-label="Remover sintoma"
-                        >
-                          <DeleteIcon />
-                        </IconButton>
-                      </Box>
-                      <Grid container spacing={2}>
-                        <Grid>
-                          <TextField
+                        <DeleteIcon />
+                      </IconButton>
+                    </Box>
+                    <Grid container spacing={2}>
+                      <Grid size={12}>
+                        {/* ✅ CAMPO 'TIPO' ALTERADO PARA SELECT */}
+                        <FormControl fullWidth>
+                          <InputLabel id={`food-type-label-${foodPreference.foodId}`}>
+                            Tipo
+                          </InputLabel>
+                          <Select
+                            labelId={`food-type-label-${foodPreference.foodId}`}
                             label="Tipo"
-                            multiline
-                            rows={2}
-                            value={foodPreferencesAndAversion.type || ''}
+                            value={foodPreference.type || ''}
                             onChange={(e) =>
                               handleFoodPreferencesAndAversionsDetailChange(
-                                foodPreferencesAndAversion.foodId,
+                                foodPreference.foodId,
                                 'type',
-                                e.target.value,
+                                e.target.value as 'PREFERENCIA' | 'AVERSAO',
                               )
                             }
-                            fullWidth
-                          />
-                        </Grid>
+                          >
+                            <MenuItem value="PREFERENCIA">Preferência</MenuItem>
+                            <MenuItem value="AVERSAO">Aversão</MenuItem>
+                          </Select>
+                        </FormControl>
                       </Grid>
-                    </Paper>
-                  </Box>
+                    </Grid>
+                  </Paper>
                 </Grid>
               ))}
             </Grid>
@@ -1089,7 +1099,7 @@ const ClinicalInformationPage = () => {
             <Grid container spacing={3}>
               <Grid size={12}>
                 <TextField
-                  name="previous_diet_history"
+                  name="previousDietHistory"
                   label="Histórico de Dietas"
                   type="number"
                   value={formData.previousDietHistory || ''}
@@ -1107,7 +1117,7 @@ const ClinicalInformationPage = () => {
             <Grid container spacing={3}>
               <Grid>
                 <TextField
-                  name="weight_kg"
+                  name="weightKg"
                   label="Peso (kg)"
                   type="number"
                   value={formData.weightKg || ''}
@@ -1117,7 +1127,7 @@ const ClinicalInformationPage = () => {
               </Grid>
               <Grid>
                 <TextField
-                  name="height_cm"
+                  name="heightCm"
                   label="Altura (cm)"
                   type="number"
                   value={formData.heightCm || ''}
@@ -1127,7 +1137,7 @@ const ClinicalInformationPage = () => {
               </Grid>
               <Grid>
                 <TextField
-                  name="waistCircumference_cm"
+                  name="waistCircumferenceCm"
                   label="Circunferência da cintura (cm)"
                   type="number"
                   value={formData.waistCircumferenceCm || ''}
@@ -1137,7 +1147,7 @@ const ClinicalInformationPage = () => {
               </Grid>
               <Grid>
                 <TextField
-                  name="upperArmCircumference_cm"
+                  name="upperArmCircumferenceCm"
                   label="Circunferência do Braço (cm)"
                   type="number"
                   value={formData.upperArmCircumferenceCm || ''}
@@ -1147,7 +1157,7 @@ const ClinicalInformationPage = () => {
               </Grid>
               <Grid>
                 <TextField
-                  name="abdomenCircumference_cm"
+                  name="abdomenCircumferenceCm"
                   label="Circunferência do Abdômen (cm)"
                   type="number"
                   value={formData.abdomenCircumferenceCm || ''}
@@ -1157,7 +1167,7 @@ const ClinicalInformationPage = () => {
               </Grid>
               <Grid>
                 <TextField
-                  name="hipCircumference_cm"
+                  name="hipCircumferenceCm"
                   label="Circunferência do Quadril (cm)"
                   type="number"
                   value={formData.hipCircumferenceCm || ''}
@@ -1167,7 +1177,7 @@ const ClinicalInformationPage = () => {
               </Grid>
               <Grid>
                 <TextField
-                  name="body_fat_percentage"
+                  name="bodyFatPercentage"
                   label="% de Gordura Corporal"
                   type="number"
                   value={formData.bodyFatPercentage || ''}
@@ -1177,7 +1187,7 @@ const ClinicalInformationPage = () => {
               </Grid>
               <Grid>
                 <TextField
-                  name="muscle_mass_kg"
+                  name="muscleMassKg"
                   label="% de massa muscular"
                   type="number"
                   value={formData.muscleMassKg || ''}
@@ -1187,7 +1197,7 @@ const ClinicalInformationPage = () => {
               </Grid>
               <Grid>
                 <TextField
-                  name="blood_pressure"
+                  name="bloodPressure"
                   label="Pressão"
                   type="text"
                   value={formData.bloodPressure || ''}
@@ -1197,7 +1207,7 @@ const ClinicalInformationPage = () => {
               </Grid>
               <Grid>
                 <TextField
-                  name="skin_hair_nails_health"
+                  name="skinHairNailsHealth"
                   label="Saúde do cabelo, pele e unha"
                   type="text"
                   value={formData.skinHairNailsHealth || ''}
@@ -1207,7 +1217,7 @@ const ClinicalInformationPage = () => {
               </Grid>
               <Grid>
                 <TextField
-                  name="libido_level"
+                  name="libidoLevel"
                   label="Nível de Libido"
                   type="number"
                   value={formData.libidoLevel || ''}

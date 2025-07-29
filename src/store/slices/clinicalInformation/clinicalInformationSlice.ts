@@ -10,7 +10,7 @@ import {
 } from '../../../services/clinicalInformationService';
 
 export const saveClinicalInformation = createAsyncThunk<
-  Partial<ClinicalInformationForm>,
+  void,
   { clinicalInformation: ClinicalInformationForm; patientId: string },
   { rejectValue: string }
 >('patient/clinicalInformation/save', async (data, { rejectWithValue }) => {
@@ -88,8 +88,7 @@ const clinicalInformationSlice = createSlice({
         state.error = action.payload ?? 'Falha ao salvar informações clínicas.';
         state.status = 'failed';
       })
-      .addCase(saveClinicalInformation.fulfilled, (state, action) => {
-        state.clinicalInformation = action.payload;
+      .addCase(saveClinicalInformation.fulfilled, (state) => {
         state.status = 'succeeded';
       });
   },
