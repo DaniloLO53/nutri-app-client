@@ -12,5 +12,6 @@ export const fetchClinicalInformationApi = (payload: { patientId: string }) => {
 };
 
 export const saveClinicalInformationApi = (patientId: string, payload: ClinicalInformationForm) => {
+  payload.patientId = patientId;
   return apiClient.post(`/patients/${patientId}/clinical-information`, payload);
 };
