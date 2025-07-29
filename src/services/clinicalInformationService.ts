@@ -1,5 +1,9 @@
-import type { ClinicalInformationForm } from '../types/clinicalInformation';
+import type { ClinicalInformationForm, MasterData } from '../types/clinicalInformation';
 import { apiClient } from './config/axiosConfig';
+
+export const fetchMasterDataApi = () => {
+  return apiClient.get<MasterData>(`/clinical-information/master-data`);
+};
 
 export const fetchClinicalInformationApi = (payload: { patientId: string }) => {
   return apiClient.get<ClinicalInformationForm>(

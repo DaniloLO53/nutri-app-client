@@ -7,7 +7,7 @@ import type {
 import {
   fetchClinicalInformationApi,
   saveClinicalInformationApi,
-} from '../../../services/clinicalInformatinService';
+} from '../../../services/clinicalInformationService';
 
 export const saveClinicalInformation = createAsyncThunk<
   Partial<ClinicalInformationForm>,
