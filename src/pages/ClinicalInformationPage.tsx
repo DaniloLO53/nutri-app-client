@@ -42,13 +42,12 @@ import type {
   FormMedication,
   FormSymptom,
 } from '../types/clinicalInformation';
-// Exemplo de Thunks que você precisaria criar:
 import {
   fetchClinicalInformation,
   saveClinicalInformation,
 } from '../store/slices/clinicalInformation/clinicalInformationSlice';
-// import { fetchClinicalInformationMasterData } from '../store/slices/clinicalInformationMasterDataSlice'; // Thunk para buscar sintomas, doenças, etc.
 import { toast } from 'react-toastify';
+import { fetchMasterData } from '../store/slices/clinicalInformation/clinicalInformationMasterDataSlice';
 
 // Componente para o painel de abas
 const TabPanel = (props: { children?: React.ReactNode; index: number; value: number }) => {
@@ -98,35 +97,19 @@ const ClinicalInformationPage = () => {
   const { clinicalInformation, status: clinicalInformationStatus } = useSelector(
     (state: RootState) => state.clinicalInformation,
   );
-  // const { symptoms, diseases, medications } = useSelector((state: RootState) => state.masterData);
-
-  // Dados mockados para o exemplo
-  const symptoms = [
-    { symptomId: '1', name: 'Dor de cabeça' },
-    { symptomId: '2', name: 'Azia' },
-  ];
-  const diagnosedDiseases = [
-    { diseaseId: '1', name: 'Diabetes Tipo 2' },
-    { diseaseId: '2', name: 'Hipertensão' },
-  ];
-  const familyDiseases = [
-    { diseaseId: '1', name: 'Diabetes Tipo 2' },
-    { diseaseId: '2', name: 'Hipertensão' },
-  ];
-  const medications = [
-    { medicationId: '1', name: 'Diabetes Tipo 2', dosage: '10mg', notes: 'Lorem Ipsum' },
-  ];
-  const allergens = [{ allergenId: '1', name: 'Diabetes Tipo 2', reactionDetails: 'Lorem Ipsum' }];
-  const foodPreferencesAndAversions: FormFoodPreference[] = [
-    { foodId: '1', name: 'Diabetes Tipo 2', type: 'AVERSAO' },
-  ];
+  const {
+    data,
+    // status: masterDataStatus,
+    // error: masterDataError,
+  } = useSelector((state: RootState) => state.masterData);
+  const { symptoms, diseases, medications, allergens, foodPreferencesAndAversions } = data;
 
   // Efeito para buscar os dados ao carregar a página
   useEffect(() => {
     if (patientId) {
       // Você irá despachar as actions para buscar os dados aqui
       dispatch(fetchClinicalInformation({ patientId }));
-      // dispatch(fetchMasterData()); // Busca todas as listas (sintomas, doenças, etc.)
+      dispatch(fetchMasterData()); // Busca todas as listas (sintomas, doenças, etc.)
       console.log('Buscando informações para o paciente:', patientId);
     }
   }, [dispatch, patientId]);
@@ -731,7 +714,7 @@ const ClinicalInformationPage = () => {
               <Grid size={12}>
                 <Autocomplete
                   multiple
-                  options={diagnosedDiseases} // Sua lista de doenças vinda da API
+                  options={diseases} // Sua lista de doenças vinda da API
                   getOptionLabel={(option) => option.name}
                   value={formData.diagnosedDiseases || []}
                   onChange={handleDiagnosedDiseasesChange}
@@ -802,7 +785,7 @@ const ClinicalInformationPage = () => {
               <Grid size={12}>
                 <Autocomplete
                   multiple
-                  options={familyDiseases} // Sua lista de doenças vinda da API
+                  options={diseases} // Sua lista de doenças vinda da API
                   getOptionLabel={(option) => option.name}
                   value={formData.familyDiseases || []}
                   onChange={handleFamilyDiseasesChange}

@@ -12,6 +12,7 @@ import notificationReducer from './slices/notifications/notificationsSlice';
 import nutritionistPatientsReducer from './slices/patients/nutritionistPatientsSlice';
 import nutritionistScheduledPatientsReducer from './slices/patients/nutritionistScheduledPatientsSlice';
 import clinicalInformationReducer from './slices/clinicalInformation/clinicalInformationSlice';
+import clinicalInformationMasterDataReducer from './slices/clinicalInformation/clinicalInformationMasterDataSlice';
 
 import { signOutUser } from './slices/auth/authThunk';
 
@@ -29,6 +30,7 @@ const appReducer = combineReducers({
   nutritionistPatients: nutritionistPatientsReducer,
   nutritionistScheduledPatients: nutritionistScheduledPatientsReducer,
   clinicalInformation: clinicalInformationReducer,
+  masterData: clinicalInformationMasterDataReducer,
 });
 
 export type RootState = ReturnType<typeof appReducer>;

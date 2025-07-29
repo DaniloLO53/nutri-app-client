@@ -1,3 +1,17 @@
+export interface MasterData {
+  symptoms: FormSymptom[];
+  allergens: FormAllergen[];
+  diseases: FormDiagnosedDisease[];
+  medications: FormMedication[];
+  foodPreferencesAndAversions: FormFoodPreference[];
+}
+
+export interface MasterDataState {
+  data: MasterData;
+  status: 'idle' | 'loading' | 'succeeded' | 'failed';
+  error: string | null;
+}
+
 export interface ClinicalInformationState {
   clinicalInformation: Partial<ClinicalInformationForm> | null;
   status: 'idle' | 'loading' | 'succeeded' | 'failed';
