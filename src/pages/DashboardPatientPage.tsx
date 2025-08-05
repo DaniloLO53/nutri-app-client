@@ -1,10 +1,7 @@
 import { Container, Typography, Box } from '@mui/material';
 
-import HistoryIcon from '@mui/icons-material/History';
-import MedicalServicesIcon from '@mui/icons-material/MedicalServices';
 import EventNoteIcon from '@mui/icons-material/EventNote';
 import AccountCircleIcon from '@mui/icons-material/AccountCircle';
-import ChatIcon from '@mui/icons-material/Chat';
 import DashboardCard from '../components/DashboardCard';
 import { useSelector } from 'react-redux';
 import { useEffect, useState } from 'react';
@@ -12,29 +9,10 @@ import type { RootState } from '../store';
 
 const dashboardItems = [
   {
-    icon: <MedicalServicesIcon />,
-    title: 'Minhas Receitas',
-    description:
-      'Visualize e gerencie suas receitas médicas ativas e passadas.',
-    path: '/receitas',
-  },
-  {
-    icon: <HistoryIcon />,
-    title: 'Histórico de Consultas',
-    description: 'Acesse o registro de todas as suas consultas e atendimentos.',
-    path: '/consultas',
-  },
-  {
     icon: <EventNoteIcon />,
     title: 'Agendamentos',
     description: 'Veja seus próximos agendamentos e marque novas consultas.',
     path: '/agendamentos/paciente',
-  },
-  {
-    icon: <ChatIcon />,
-    title: 'Mensagens',
-    description: 'Converse com seu nutricionista e tire suas dúvidas.',
-    path: '/mensagens',
   },
   {
     icon: <AccountCircleIcon />,
