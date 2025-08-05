@@ -265,11 +265,17 @@ const AppointmentsPatientPage = () => {
                       })()}
                     </Typography>
 
-                    <Typography variant="caption" color="text.secondary">
-                      {`${dayjs(appt.startTime).format('HH:mm')} - ${dayjs(appt.startTime)
-                        .add(appt.durationMinutes, 'minute')
-                        .format('HH:mm')}`}
-                    </Typography>
+                    <Box sx={{ display: 'flex', flexDirection: 'column' }}>
+                      <Typography variant="caption" color="text.secondary">
+                        {`${dayjs(appt.startTime).format('HH:mm')} - ${dayjs(appt.startTime)
+                          .add(appt.durationMinutes, 'minute')
+                          .format('HH:mm')}`}
+                      </Typography>
+
+                      <Typography variant="caption" color="text.secondary">
+                        {appt.location.address}
+                      </Typography>
+                    </Box>
                   </TableCell>
 
                   <TableCell align="center">
