@@ -36,20 +36,28 @@ export const fetchOwnSchedule = createAsyncThunk<
 
 export const fetchNutritionistSchedule = createAsyncThunk<
   CalendarNutritionistAppointment[], // Tipo do retorno em caso de sucesso
-  { startDate: string; endDate: string; nutritionistId: string }, // Tipo do argumento de entrada
+  { startDate: string; endDate: string; nutritionistId: string; locationId: string }, // Tipo do argumento de entrada
   { rejectValue: string } // Tipo do retorno em caso de falha
->('schedule/fetch', async ({ startDate, endDate, nutritionistId }, { rejectWithValue }) => {
-  try {
-    if (!nutritionistId) return [];
-    const response = await fetchNutritionistScheduleApi(startDate, endDate, nutritionistId);
-    console.log({ response: response.data });
-    return response.data;
-  } catch (error) {
-    const axiosError = error as AxiosError<{ message: string }>;
-    console.error(axiosError);
-    return rejectWithValue(axiosError.response?.data?.message || 'Erro ao buscar a agenda.');
-  }
-});
+>(
+  'schedule/fetch',
+  async ({ startDate, endDate, nutritionistId, locationId }, { rejectWithValue }) => {
+    try {
+      if (!nutritionistId) return [];
+      const response = await fetchNutritionistScheduleApi(
+        startDate,
+        endDate,
+        nutritionistId,
+        locationId,
+      );
+      console.log({ response: response.data });
+      return response.data;
+    } catch (error) {
+      const axiosError = error as AxiosError<{ message: string }>;
+      console.error(axiosError);
+      return rejectWithValue(axiosError.response?.data?.message || 'Erro ao buscar a agenda.');
+    }
+  },
+);
 
 export const deleteSchedule = createAsyncThunk<
   string, // Tipo do retorno em caso de sucesso (o ID do item deletado)

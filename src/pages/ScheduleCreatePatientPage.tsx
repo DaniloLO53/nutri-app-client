@@ -78,14 +78,17 @@ const ScheduleCreatePagePatient = () => {
   }, [isBookingSuccess, navigate]);
 
   useEffect(() => {
-    dispatch(
-      fetchNutritionistSchedule({
-        startDate: startOfWeek.format('YYYY-MM-DD'), // Envia apenas a data. Ex: "2025-07-13"
-        endDate: endOfWeek.format('YYYY-MM-DD'), // Ex: "2025-07-19"
-        nutritionistId: nutritionistId || '',
-      }),
-    );
-  }, [dispatch, startOfWeek, endOfWeek, nutritionistId]);
+    if (locationId && nutritionistId) {
+      dispatch(
+        fetchNutritionistSchedule({
+          startDate: startOfWeek.format('YYYY-MM-DD'), // Envia apenas a data. Ex: "2025-07-13"
+          endDate: endOfWeek.format('YYYY-MM-DD'), // Ex: "2025-07-19"
+          nutritionistId: nutritionistId || '',
+          locationId: locationId,
+        }),
+      );
+    }
+  }, [dispatch, startOfWeek, endOfWeek, nutritionistId, locationId]);
 
   // Em ScheduleCreatePagePatient.tsx
 
