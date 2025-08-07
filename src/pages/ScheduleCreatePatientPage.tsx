@@ -44,7 +44,9 @@ const ScheduleCreatePagePatient = () => {
   const dispatch = useDispatch<AppDispatch>();
   const { userInfo } = useSelector((state: RootState) => state.signIn);
 
-  const { nutricionistaId: nutritionistId } = useParams();
+  const { nutricionistaId: nutritionistId, localidadeId: locationId } = useParams();
+
+  console.log({ locationId });
 
   const { schedules, status: scheduleStatus } = useSelector((state: RootState) => state.schedule);
 

@@ -155,7 +155,7 @@ function App() {
             }
           />
           <Route
-            path="/paciente/horarios/novo/:nutricionistaId"
+            path="/paciente/horarios/novo/:nutricionistaId/localidade/:localidadeId"
             element={
               <PrivateRoute allowedRoles={[UserRole.ROLE_PATIENT]}>
                 <ScheduleCreatePatientPage />

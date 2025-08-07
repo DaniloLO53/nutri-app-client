@@ -10,7 +10,7 @@ interface PatientOrNutritionist {
 export interface AvailableNutritionist {
   id: string;
   nutritionistName: string;
-  address: string;
+  location: { id: string; address: string };
   ibgeApiCity: string;
   ibgeApiState: string;
   acceptsRemote: boolean;

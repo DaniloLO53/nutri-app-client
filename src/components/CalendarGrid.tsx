@@ -12,6 +12,7 @@ import { green } from '@mui/material/colors';
 interface CalendarGridProps {
   startOfWeek: dayjs.Dayjs;
   slotDuration: number;
+  showLocation: boolean;
   events: (CalendarSchedule | CalendarNutritionistAppointment | CalendarPatientAppointment)[];
   onSlotClick?: (slotDate: dayjs.Dayjs) => void;
   onEventClick: (event: CalendarSchedule | CalendarNutritionistAppointment) => void;
@@ -41,6 +42,7 @@ const CalendarGrid = ({
   events,
   onSlotClick,
   onEventClick,
+  showLocation,
 }: CalendarGridProps) => {
   const now = dayjs(); // "Fotografa" a hora atual no momento da renderização
   const days = Array.from({ length: 7 }, (_, i) => startOfWeek.add(i, 'day'));
@@ -91,13 +93,11 @@ const CalendarGrid = ({
       ...styleProps,
       p: 0.5,
       borderRadius: '4px',
-      fontSize: '12px',
+      fontSize: '11px',
       overflow: 'hidden',
       zIndex: 1,
     };
   };
-
-  // Em CalendarGrid.tsx
 
   return (
     <Paper sx={{ overflow: 'auto' }}>
@@ -105,7 +105,7 @@ const CalendarGrid = ({
         sx={{
           display: 'grid',
           gridTemplateColumns: 'auto repeat(7, 1fr)',
-          gridTemplateRows: `auto repeat(${timeSlots.length}, 40px)`,
+          gridTemplateRows: `auto repeat(${timeSlots.length}, 70px)`,
           minWidth: '800px',
         }}
       >
@@ -203,6 +203,11 @@ const CalendarGrid = ({
                 },
                 position: 'relative',
                 zIndex: 2,
+                // Adicionado para um melhor layout interno
+                display: 'flex',
+                flexDirection: 'column',
+                justifyContent: 'center',
+                p: 0.5, // Um pequeno preenchimento interno
               }}
               onClick={(e) => {
                 if (!isClickable) return;
@@ -210,10 +215,40 @@ const CalendarGrid = ({
                 onEventClick(event);
               }}
             >
-              {isAppointment
-                ? (event as CalendarNutritionistAppointment).patient?.name ||
-                  (event as CalendarPatientAppointment).nutritionist?.name
-                : 'Disponível'}
+              <Typography
+                sx={{
+                  fontSize: '0.9rem',
+                  fontWeight: 500,
+                  overflow: 'hidden',
+                  textOverflow: 'ellipsis',
+                  display: '-webkit-box',
+                  WebkitLineClamp: '1',
+                  WebkitBoxOrient: 'vertical',
+                }}
+              >
+                {isAppointment
+                  ? (event as CalendarNutritionistAppointment).patient?.name ||
+                    (event as CalendarPatientAppointment).nutritionist?.name
+                  : 'Disponível'}
+              </Typography>
+
+              {showLocation && (
+                <Typography
+                  title={event.location?.address}
+                  sx={{
+                    mt: 1,
+                    fontSize: '0.875rem',
+                    lineHeight: 1.3,
+                    overflow: 'hidden',
+                    textOverflow: 'ellipsis',
+                    display: '-webkit-box',
+                    WebkitLineClamp: '1',
+                    WebkitBoxOrient: 'vertical',
+                  }}
+                >
+                  {event.location?.address}
+                </Typography>
+              )}
             </Box>
           );
         })}

@@ -19,6 +19,8 @@ import {
   DialogTitle,
   DialogActions,
   IconButton,
+  FormControlLabel,
+  Checkbox,
 } from '@mui/material';
 import CloseIcon from '@mui/icons-material/Close';
 import ArrowBackIosNewIcon from '@mui/icons-material/ArrowBackIosNew';
@@ -74,6 +76,8 @@ const ScheduleCreateNutritionistPage = () => {
   const [isAppointmentCreateOpen, setIsAppointmentCreateOpen] = useState(false);
 
   const [isFinishedDialogOpen, setIsFinishedDialogOpen] = useState(false);
+
+  const [showLocation, setShowLocation] = useState(true);
 
   const [dialogActionType, setDialogActionType] = useState<'confirm' | 'finish' | null>(null);
 
@@ -251,7 +255,7 @@ const ScheduleCreateNutritionistPage = () => {
         sx={{
           display: 'flex',
           justifyContent: 'space-between',
-          alignItems: 'start',
+          alignItems: 'center',
           mb: 3,
         }}
       >
@@ -275,21 +279,34 @@ const ScheduleCreateNutritionistPage = () => {
             Próxima Semana
           </Button>
         </Box>
-        <FormControl sx={{ minWidth: 200 }}>
-          <InputLabel>Duração do Atendimento</InputLabel>
-          <Select
-            value={slotDuration}
-            label="Duração do Atendimento"
-            onChange={(e) => setSlotDuration(e.target.value as number)}
-            size="small"
-          >
-            {DURATIONS.map((d) => (
-              <MenuItem key={d} value={d}>
-                {d} minutos
-              </MenuItem>
-            ))}
-          </Select>
-        </FormControl>
+        <Box sx={{ display: 'flex', flexDirection: 'column' }}>
+          <FormControlLabel
+            control={
+              <Checkbox
+                checked={showLocation}
+                onChange={(event) => setShowLocation(event.target.checked)}
+                size="small"
+              />
+            }
+            label="Mostrar localização"
+            sx={{ mb: 2 }} // Adiciona uma margem inferior
+          />
+          <FormControl sx={{ minWidth: 200 }}>
+            <InputLabel>Duração do Atendimento</InputLabel>
+            <Select
+              value={slotDuration}
+              label="Duração do Atendimento"
+              onChange={(e) => setSlotDuration(e.target.value as number)}
+              size="small"
+            >
+              {DURATIONS.map((d) => (
+                <MenuItem key={d} value={d}>
+                  {d} minutos
+                </MenuItem>
+              ))}
+            </Select>
+          </FormControl>
+        </Box>
       </Box>
       <Box
         sx={{
@@ -326,6 +343,7 @@ const ScheduleCreateNutritionistPage = () => {
           events={state.schedule.schedules}
           onSlotClick={handleSlotClick}
           onEventClick={handleEventClick}
+          showLocation={showLocation}
         />
       )}
       <Dialog

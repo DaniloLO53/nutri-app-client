@@ -32,7 +32,7 @@ const AvailableNutritionistResultCard = ({
           </Typography>
 
           <Typography component="div" variant="subtitle2" p={1}>
-            {nutritionist.address}
+            {nutritionist.location.address}
           </Typography>
 
           <Box sx={{ display: 'flex', flexWrap: 'wrap', gap: 1, mt: 0.5 }}>
@@ -64,7 +64,7 @@ const AvailableNutritionistResultCard = ({
           <Button
             variant="contained"
             component={RouterLink}
-            to={`/paciente/horarios/novo/${nutritionist.id}`}
+            to={`/paciente/horarios/novo/${nutritionist.id}/localidade/${nutritionist.location.id}`}
           >
             Agendar
           </Button>
