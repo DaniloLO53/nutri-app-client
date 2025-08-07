@@ -17,6 +17,7 @@ export const createAppointment = createAsyncThunk<
 >('patient/appointments/create', async (data, { rejectWithValue }) => {
   const { scheduleId, patientId, isRemote } = data;
   try {
+    console.log({ scheduleId });
     const response = await createAppointmentApi(scheduleId, {
       patientId,
       isRemote,

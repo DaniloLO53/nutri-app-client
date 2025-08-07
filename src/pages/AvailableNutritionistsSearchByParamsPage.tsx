@@ -56,7 +56,9 @@ const AppointmentCreatePage = () => {
     },
   });
 
-  const selectedState = watch('ibgeApiState');
+  const [selectedState, acceptsRemote] = watch(['ibgeApiState', 'acceptsRemote']);
+
+  const isSearchDisabled = status === 'loading' || (!acceptsRemote && !selectedState);
 
   // useEffect para buscar estados
   // UseEffect para buscar os estados do IBGE quando o componente montar
@@ -223,7 +225,7 @@ const AppointmentCreatePage = () => {
             </Select>
           </FormControl>
         </Box>
-        <Button type="submit" variant="contained" disabled={status === 'loading'}>
+        <Button type="submit" variant="contained" disabled={isSearchDisabled}>
           Buscar
         </Button>
       </Paper>
