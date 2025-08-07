@@ -202,6 +202,7 @@ const ScheduleCreatePagePatient = () => {
           slotDuration={slotDuration}
           events={schedules}
           onEventClick={handleEventClick}
+          forPatient={true}
         />
       )}
 

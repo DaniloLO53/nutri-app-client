@@ -12,7 +12,8 @@ import { green } from '@mui/material/colors';
 interface CalendarGridProps {
   startOfWeek: dayjs.Dayjs;
   slotDuration: number;
-  showLocation: boolean;
+  showLocation?: boolean;
+  forPatient: boolean;
   events: (CalendarSchedule | CalendarNutritionistAppointment | CalendarPatientAppointment)[];
   onSlotClick?: (slotDate: dayjs.Dayjs) => void;
   onEventClick: (event: CalendarSchedule | CalendarNutritionistAppointment) => void;
@@ -43,6 +44,7 @@ const CalendarGrid = ({
   onSlotClick,
   onEventClick,
   showLocation,
+  forPatient,
 }: CalendarGridProps) => {
   const now = dayjs(); // "Fotografa" a hora atual no momento da renderização
   const days = Array.from({ length: 7 }, (_, i) => startOfWeek.add(i, 'day'));
@@ -67,7 +69,6 @@ const CalendarGrid = ({
     const endRow = Math.floor(eventEndMinutes / gridInterval) + 2;
     const gridRowValue = `${startRow} / ${endRow}`;
 
-    // Lógica de estilo condicional
     let styleProps = {
       backgroundColor: 'primary.light',
       color: 'primary.contrastText',
@@ -80,9 +81,9 @@ const CalendarGrid = ({
 
       if (statusStyle) {
         styleProps = {
-          backgroundColor: statusStyle.bg,
+          backgroundColor: forPatient ? 'error.light' : statusStyle.bg,
           color: 'common.white', // Assumindo texto branco/claro para todas as cores
-          borderLeft: `3px solid ${statusStyle.border}`,
+          borderLeft: forPatient ? '3px solid error.main' : `3px solid ${statusStyle.border}`,
         };
       }
     }
@@ -226,10 +227,12 @@ const CalendarGrid = ({
                   WebkitBoxOrient: 'vertical',
                 }}
               >
-                {isAppointment
-                  ? (event as CalendarNutritionistAppointment).patient?.name ||
-                    (event as CalendarPatientAppointment).nutritionist?.name
-                  : 'Disponível'}
+                {isAppointment && forPatient
+                  ? 'Indisponível'
+                  : isAppointment
+                    ? (event as CalendarNutritionistAppointment).patient?.name ||
+                      (event as CalendarPatientAppointment).nutritionist?.name
+                    : 'Disponível'}
               </Typography>
 
               {showLocation && (
