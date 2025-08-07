@@ -344,6 +344,7 @@ const ScheduleCreateNutritionistPage = () => {
           onSlotClick={handleSlotClick}
           onEventClick={handleEventClick}
           showLocation={showLocation}
+          forPatient={false}
         />
       )}
       <Dialog

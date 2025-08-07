@@ -20,10 +20,11 @@ export const fetchNutritionistScheduleApi = (
   startDate: string,
   endDate: string,
   nutritionistId: string,
+  locationId: string,
 ) => {
   const params = new URLSearchParams({ startDate, endDate });
   return apiClient.get<CalendarSchedule[]>(
-    `/nutritionists/${nutritionistId}/schedules?${params.toString()}`,
+    `/nutritionists/${nutritionistId}/locations/${locationId}/schedules?${params.toString()}`,
   );
 };
 
